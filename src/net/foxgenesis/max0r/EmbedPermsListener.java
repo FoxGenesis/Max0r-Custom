@@ -1,7 +1,8 @@
 package net.foxgenesis.max0r;
 
+import static net.foxgenesis.max0r.util.StringUtils.URL_REGEX;
+
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 
@@ -16,13 +17,13 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.foxgenesis.config.fields.BooleanField;
 import net.foxgenesis.config.fields.StringField;
+import net.foxgenesis.max0r.util.DiscordHelper;;
 
 public class EmbedPermsListener extends ListenerAdapter {
-	//private static final Logger logger = LoggerFactory.getLogger("EmbedPermsListener");
-	private static final Pattern pattern = Pattern.compile(
-			"\\b((https|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])", Pattern.CASE_INSENSITIVE);
+	// private static final Logger logger =
+	// LoggerFactory.getLogger("EmbedPermsListener");
 
-	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> true, true);
+	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> false, true);
 	private static final StringField embedURL = new StringField("max0r.embedperms.url",
 			guild -> "https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", true);
 
@@ -34,14 +35,12 @@ public class EmbedPermsListener extends ListenerAdapter {
 			if (enabled.optFrom(guild)) {
 				GuildChannel channel = event.getGuildChannel();
 				Message message = event.getMessage();
-				Member member = event.getMember();
 
 				// Check if message contains url AND user does not have embed perms AND bot has
 				// embed perms
-				if (checkForUrls(message.getContentStripped())
-						&& !member.getPermissions(channel).contains(Permission.MESSAGE_EMBED_LINKS)
-						&& getBotMember(guild).getPermissions(channel).contains(Permission.MESSAGE_EMBED_LINKS)) {
-					
+				if (checkForUrls(message.getContentStripped()) && !hasEmbedPerms(event.getMember(), channel)
+						&& hasEmbedPerms(DiscordHelper.getBotMember(guild), channel)) {
+					// Send no embed permission image
 					message.replyEmbeds(buildEmbed(guild)).queue();
 				}
 			}
@@ -52,8 +51,12 @@ public class EmbedPermsListener extends ListenerAdapter {
 		return new EmbedBuilder().setColor(0).setImage(embedURL.optFrom(guild)).build();
 	}
 
+	private static boolean hasEmbedPerms(@Nonnull Member member, @Nonnull GuildChannel channel) {
+		return member.getPermissions(channel).contains(Permission.MESSAGE_EMBED_LINKS);
+	}
+
 	private static boolean checkForUrls(@Nonnull String in) {
-		Matcher urlMatcher = pattern.matcher(in);
+		Matcher urlMatcher = URL_REGEX.matcher(in);
 
 		while (urlMatcher.find()) {
 			if (urlMatcher.start() > 0) {
@@ -63,9 +66,5 @@ public class EmbedPermsListener extends ListenerAdapter {
 		}
 
 		return false;
-	}
-
-	private static Member getBotMember(@Nonnull Guild guild) {
-		return guild.getMemberById(guild.getJDA().getSelfUser().getId());
 	}
 }
