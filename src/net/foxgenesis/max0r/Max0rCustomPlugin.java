@@ -5,6 +5,12 @@ import net.foxgenesis.watame.WatameBot.ProtectedJDABuilder;
 import net.foxgenesis.watame.plugin.IPlugin;
 import net.foxgenesis.watame.plugin.PluginProperties;
 
+/**
+ * NEED_JAVADOC
+ * 
+ * @author Ashley
+ *
+ */
 @PluginProperties(name = "Max0r Custom Plugin", description = "A custom plugin for the Max0r discord", version = "0.0.1")
 public class Max0rCustomPlugin implements IPlugin {
 	/**

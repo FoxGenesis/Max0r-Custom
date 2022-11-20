@@ -24,6 +24,9 @@ public final class StringUtils {
 			"\\b((http|https|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])",
 			Pattern.CASE_INSENSITIVE);
 
+	/**
+	 * NEED_JAVADOC
+	 */
 	public static final Predicate<String> CONTAINS_URL = URL_REGEX.asPredicate();
 
 	/**

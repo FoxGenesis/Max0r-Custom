@@ -19,11 +19,24 @@ import net.foxgenesis.config.fields.BooleanField;
 import net.foxgenesis.config.fields.StringField;
 import net.foxgenesis.max0r.util.DiscordHelper;;
 
+/**
+ * NEED_JAVADOC
+ * 
+ * @author Ashley
+ *
+ */
 public class EmbedPermsListener extends ListenerAdapter {
 	// private static final Logger logger =
 	// LoggerFactory.getLogger("EmbedPermsListener");
 
+	/**
+	 * NEED_JAVADOC
+	 */
 	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> false, true);
+
+	/**
+	 * NEED_JAVADOC
+	 */
 	private static final StringField embedURL = new StringField("max0r.embedperms.url",
 			guild -> "https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", true);
 
@@ -47,18 +60,39 @@ public class EmbedPermsListener extends ListenerAdapter {
 		}
 	}
 
+	/**
+	 * NEED_JAVADOC
+	 * 
+	 * @param guild
+	 * @return
+	 */
 	private static MessageEmbed buildEmbed(@Nonnull Guild guild) {
 		return new EmbedBuilder().setColor(0).setImage(embedURL.optFrom(guild)).build();
 	}
 
+	/**
+	 * NEED_JAVADOC
+	 * 
+	 * @param member
+	 * @param channel
+	 * @return
+	 */
 	private static boolean hasEmbedPerms(@Nonnull Member member, @Nonnull GuildChannel channel) {
 		return member.getPermissions(channel).contains(Permission.MESSAGE_EMBED_LINKS);
 	}
 
+	/**
+	 * NEED_JAVADOC
+	 * 
+	 * @param in
+	 * @return
+	 */
 	private static boolean checkForUrls(@Nonnull String in) {
 		Matcher urlMatcher = URL_REGEX.matcher(in);
 
 		while (urlMatcher.find()) {
+			// FIXME i don't know why spaz added the check for <>. Id like to move over to
+			// StringUtils.hasURL
 			if (urlMatcher.start() > 0) {
 				if (in.charAt(urlMatcher.start() - 1) != '<' && in.charAt(urlMatcher.end() - 1) != '>') { return true; }
 			} else

@@ -28,12 +28,21 @@ import net.foxgenesis.max0r.util.StringUtils;
 public class NitroScamListener extends ListenerAdapter {
 	private static final Logger logger = LoggerFactory.getLogger("Nitro Scam Listener");
 
+	/**
+	 * NEED_JAVADOC
+	 */
 	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> true, true);
 
+	/**
+	 * NEED_JAVADOC
+	 */
 	private static final String BAN_MESSAGE = "You were banned for being suspected of a Nitro scam spam bot. "
 			+ "This bot uses a series of checks to predict if an account is hijacked by a bot. If this was a "
 			+ "mistake, please contact a member of the mod team.";
 
+	/**
+	 * NEED_JAVADOC
+	 */
 	private static final int SIMILARITY_THRESHOLD = 3;
 
 	// ============================================================================================
