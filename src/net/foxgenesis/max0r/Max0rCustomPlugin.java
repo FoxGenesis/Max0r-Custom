@@ -10,7 +10,7 @@ public class Max0rCustomPlugin implements IPlugin {
 	/**
 	 * Logger
 	 */
-	//private static final Logger logger = LoggerFactory.getLogger("Max0r");
+	// private static final Logger logger = LoggerFactory.getLogger("Max0r");
 
 	@Override
 	public void preInit() {
@@ -18,7 +18,10 @@ public class Max0rCustomPlugin implements IPlugin {
 	}
 
 	@Override
-	public void init(ProtectedJDABuilder builder) { builder.addEventListeners(new EmbedPermsListener()); }
+	public void init(ProtectedJDABuilder builder) {
+		builder.addEventListeners(new EmbedPermsListener());
+		builder.addEventListeners(new NitroScamListener());
+	}
 
 	@Override
 	public void postInit(WatameBot bot) {}
