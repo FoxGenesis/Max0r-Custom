@@ -25,8 +25,9 @@ public class Max0rCustomPlugin implements IPlugin {
 
 	@Override
 	public void init(ProtectedJDABuilder builder) {
-		builder.addEventListeners(new EmbedPermsListener());
-		builder.addEventListeners(new NitroScamListener());
+		//builder.addEventListeners(new EmbedPermsListener());
+		//builder.addEventListeners(new NitroScamListener());
+		//builder.addEventListeners(new DadListener());
 	}
 
 	@Override
