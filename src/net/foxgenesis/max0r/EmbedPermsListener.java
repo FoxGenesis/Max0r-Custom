@@ -1,8 +1,9 @@
 package net.foxgenesis.max0r;
 
-import static net.foxgenesis.max0r.util.StringUtils.URL_REGEX;
+import static net.foxgenesis.max0r.util.StringUtils.CONTAINS_URL;
 
-import java.util.regex.Matcher;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
@@ -17,88 +18,57 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.foxgenesis.config.fields.BooleanField;
 import net.foxgenesis.config.fields.StringField;
-import net.foxgenesis.max0r.util.DiscordHelper;;
+import net.foxgenesis.max0r.util.DiscordUtils;;
 
 /**
- * NEED_JAVADOC
+ * Listener to check if a user posts a URL but doesn't have embed permissions.
  * 
  * @author Ashley
  *
  */
 public class EmbedPermsListener extends ListenerAdapter {
-	// private static final Logger logger =
-	// LoggerFactory.getLogger("EmbedPermsListener");
 
 	/**
-	 * NEED_JAVADOC
+	 * Conditional to check if this functionality is enabled
 	 */
 	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> false, true);
 
 	/**
-	 * NEED_JAVADOC
+	 * Configuration string containing url for no embed permissions image
 	 */
 	private static final StringField embedURL = new StringField("max0r.embedperms.url",
 			guild -> "https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", true);
 
+	/**
+	 * Function to build no embed permissions image
+	 */
+	private static final Function<@Nonnull Guild, @Nonnull MessageEmbed> noEmbedImage = guild -> new EmbedBuilder().setColor(0)
+			.setImage(embedURL.optFrom(guild)).build();
+
+	/**
+	 * Predicate to check if a user has embed permissions in a guild channel
+	 */
+	private static BiPredicate<Member, @Nonnull GuildChannel> hasEmbedPerms = (member, channel) -> member.getPermissions(channel)
+			.contains(Permission.MESSAGE_EMBED_LINKS);
+
 	@Override
-	public void onMessageReceived(MessageReceivedEvent event) {
+	public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+		// Check if from guild
 		if (event.isFromGuild()) {
 			Guild guild = event.getGuild();
 
+			// Check if enabled
 			if (enabled.optFrom(guild)) {
 				GuildChannel channel = event.getGuildChannel();
 				Message message = event.getMessage();
 
-				// Check if message contains url AND user does not have embed perms AND bot has
-				// embed perms
-				if (checkForUrls(message.getContentStripped()) && !hasEmbedPerms(event.getMember(), channel)
-						&& hasEmbedPerms(DiscordHelper.getBotMember(guild), channel)) {
-					// Send no embed permission image
-					message.replyEmbeds(buildEmbed(guild)).queue();
+				// Check for url and user has no embed perms but we do
+				if (CONTAINS_URL.test(message.getContentStripped()) && !hasEmbedPerms.test(event.getMember(), channel)
+						&& hasEmbedPerms.test(DiscordUtils.getBotMember(guild), channel)) {
+
+					message.replyEmbeds(noEmbedImage.apply(guild)).queue();
 				}
 			}
 		}
-	}
-
-	/**
-	 * NEED_JAVADOC
-	 * 
-	 * @param guild
-	 * @return
-	 */
-	private static MessageEmbed buildEmbed(@Nonnull Guild guild) {
-		return new EmbedBuilder().setColor(0).setImage(embedURL.optFrom(guild)).build();
-	}
-
-	/**
-	 * NEED_JAVADOC
-	 * 
-	 * @param member
-	 * @param channel
-	 * @return
-	 */
-	private static boolean hasEmbedPerms(@Nonnull Member member, @Nonnull GuildChannel channel) {
-		return member.getPermissions(channel).contains(Permission.MESSAGE_EMBED_LINKS);
-	}
-
-	/**
-	 * NEED_JAVADOC
-	 * 
-	 * @param in
-	 * @return
-	 */
-	private static boolean checkForUrls(@Nonnull String in) {
-		Matcher urlMatcher = URL_REGEX.matcher(in);
-
-		while (urlMatcher.find()) {
-			// FIXME i don't know why spaz added the check for <>. Id like to move over to
-			// StringUtils.hasURL
-			if (urlMatcher.start() > 0) {
-				if (in.charAt(urlMatcher.start() - 1) != '<' && in.charAt(urlMatcher.end() - 1) != '>') { return true; }
-			} else
-				return true;
-		}
-
-		return false;
 	}
 }
