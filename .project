@@ -3,7 +3,6 @@
 	<name>PluginTemplate</name>
 	<comment></comment>
 	<projects>
-		<project>Watamebot</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
