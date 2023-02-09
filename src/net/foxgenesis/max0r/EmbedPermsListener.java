@@ -1,6 +1,6 @@
 package net.foxgenesis.max0r;
 
-import static net.foxgenesis.max0r.util.StringUtils.CONTAINS_URL;
+import static net.foxgenesis.util.StringUtils.CONTAINS_URL;
 
 import java.util.function.BiPredicate;
 import java.util.function.Function;
@@ -18,7 +18,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.foxgenesis.config.fields.BooleanField;
 import net.foxgenesis.config.fields.StringField;
-import net.foxgenesis.max0r.util.DiscordUtils;;
+import net.foxgenesis.watame.util.DiscordUtils;;
 
 /**
  * Listener to check if a user posts a URL but doesn't have embed permissions.
@@ -31,7 +31,7 @@ public class EmbedPermsListener extends ListenerAdapter {
 	/**
 	 * Conditional to check if this functionality is enabled
 	 */
-	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> false, true);
+	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> true, true);
 
 	/**
 	 * Configuration string containing url for no embed permissions image

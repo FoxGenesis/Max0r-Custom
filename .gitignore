@@ -2,3 +2,8 @@
 .settings/
 target/
 /test/
+/logs/
+/repo/
+/config/
+.pid
+test-deploy-token.txt

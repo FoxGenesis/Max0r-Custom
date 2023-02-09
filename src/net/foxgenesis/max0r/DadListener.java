@@ -14,7 +14,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.foxgenesis.config.fields.BooleanField;
-import net.foxgenesis.max0r.util.DiscordUtils;
+import net.foxgenesis.watame.util.DiscordUtils;
 
 public class DadListener extends ListenerAdapter {
 	private static final Logger logger = LoggerFactory.getLogger("Dad Listener");
