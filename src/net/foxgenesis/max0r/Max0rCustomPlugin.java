@@ -32,8 +32,8 @@ public class Max0rCustomPlugin implements IPlugin {
 		builder.addEventListeners(new EmbedPermsListener());
 		logger.info("Adding dad listener");
 		builder.addEventListeners(new DadListener());
-		//logger.info("Adding spaz dick listener");
-		//builder.addEventListeners(new SpazDickListener());
+		logger.info("Adding spaz dick listener");
+		builder.addEventListeners(new SpazDickListener());
 	}
 
 	@Override

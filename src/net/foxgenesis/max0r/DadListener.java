@@ -19,7 +19,7 @@ import net.foxgenesis.watame.util.DiscordUtils;
 public class DadListener extends ListenerAdapter {
 	private static final Logger logger = LoggerFactory.getLogger("Dad Listener");
 
-	private static final BooleanField enabled = new BooleanField("max0r.dad.enabled", guild -> true, true);
+	private static final BooleanField enabled = new BooleanField("max0r-dad-enabled", guild -> true, true);
 
 	private static final Pattern regex = Pattern.compile("\\bi[']?m\\s(\\S*)", Pattern.CASE_INSENSITIVE);
 

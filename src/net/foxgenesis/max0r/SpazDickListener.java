@@ -17,7 +17,7 @@ import net.foxgenesis.config.fields.BooleanField;
 public class SpazDickListener extends ListenerAdapter {
 	private static final Logger logger = LoggerFactory.getLogger("Spaz Dick Listener");
 
-	private static final BooleanField enabled = new BooleanField("max0r.spazdick.enabled", guild -> true, true);
+	private static final BooleanField enabled = new BooleanField("max0r-spazdick-enabled", guild -> true, true);
 
 	private static final Pattern regex = Pattern.compile("spaz dick", Pattern.CASE_INSENSITIVE);
 

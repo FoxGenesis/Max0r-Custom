@@ -31,25 +31,25 @@ public class EmbedPermsListener extends ListenerAdapter {
 	/**
 	 * Conditional to check if this functionality is enabled
 	 */
-	private static final BooleanField enabled = new BooleanField("max0r.embedperms.enabled", guild -> true, true);
+	private static final BooleanField enabled = new BooleanField("max0r-embedperms-enabled", guild -> true, true);
 
 	/**
 	 * Configuration string containing url for no embed permissions image
 	 */
-	private static final StringField embedURL = new StringField("max0r.embedperms.url",
+	private static final StringField embedURL = new StringField("max0r-embedperms-url",
 			guild -> "https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", true);
 
 	/**
 	 * Function to build no embed permissions image
 	 */
-	private static final Function<@Nonnull Guild, @Nonnull MessageEmbed> noEmbedImage = guild -> new EmbedBuilder().setColor(0)
-			.setImage(embedURL.optFrom(guild)).build();
+	private static final Function<@Nonnull Guild, @Nonnull MessageEmbed> noEmbedImage = guild -> new EmbedBuilder()
+			.setColor(DiscordUtils.getBotMember(guild).getColor()).setImage(embedURL.optFrom(guild)).build();
 
 	/**
 	 * Predicate to check if a user has embed permissions in a guild channel
 	 */
-	private static BiPredicate<Member, @Nonnull GuildChannel> hasEmbedPerms = (member, channel) -> member.getPermissions(channel)
-			.contains(Permission.MESSAGE_EMBED_LINKS);
+	private static BiPredicate<Member, @Nonnull GuildChannel> hasEmbedPerms = (member, channel) -> member
+			.getPermissions(channel).contains(Permission.MESSAGE_EMBED_LINKS);
 
 	@Override
 	public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
