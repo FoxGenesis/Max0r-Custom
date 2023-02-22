@@ -3,30 +3,26 @@ package net.foxgenesis.max0r;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.foxgenesis.config.fields.BooleanField;
+import net.foxgenesis.property.IPropertyField;
+import net.foxgenesis.watame.WatameBot;
+import net.foxgenesis.watame.property.IGuildPropertyMapping;
 
 public class SpazDickListener extends ListenerAdapter {
-	private static final Logger logger = LoggerFactory.getLogger("Spaz Dick Listener");
-
-	private static final BooleanField enabled = new BooleanField("max0r-spazdick-enabled", guild -> true, true);
+	private static final IPropertyField<String, Guild, IGuildPropertyMapping> enabled = WatameBot.getInstance()
+			.getPropertyProvider().getProperty("max0r-spazdick-enabled");
 
 	private static final Pattern regex = Pattern.compile("spaz dick", Pattern.CASE_INSENSITIVE);
 
 	@Override
-	public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+	public void onMessageReceived(MessageReceivedEvent event) {
 		if (event.isFromGuild()) {
 			Guild guild = event.getGuild();
 
-			if (enabled.optFrom(guild)) {
+			if (enabled.get(guild, false, IGuildPropertyMapping::getAsBoolean)) {
 				Message message = event.getMessage();
 				Matcher matcher = regex.matcher(message.getContentStripped());
 

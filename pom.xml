@@ -3,14 +3,16 @@
 	<groupId>net.foxgenesis.max0r</groupId>
 	<artifactId>max0r-custom-plugin</artifactId>
 	<version>0.0.1</version>
+	<properties>
+		<project.build.sourceEncoding>ASCII</project.build.sourceEncoding>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>net.foxgenesis.watame</groupId>
 			<artifactId>watamebot</artifactId>
-			<version>1.0.1</version>
+			<version>1.0.5</version>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
 			<plugin>
