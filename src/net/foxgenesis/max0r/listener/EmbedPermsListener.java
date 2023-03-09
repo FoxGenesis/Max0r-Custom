@@ -1,9 +1,8 @@
-package net.foxgenesis.max0r;
+package net.foxgenesis.max0r.listener;
 
 import static net.foxgenesis.util.StringUtils.CONTAINS_URL;
 
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -14,10 +13,9 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.foxgenesis.property.IPropertyField;
+import net.foxgenesis.property.IProperty;
 import net.foxgenesis.watame.WatameBot;
-import net.foxgenesis.watame.property.IGuildPropertyMapping;
-import net.foxgenesis.watame.util.DiscordUtils;;
+import net.foxgenesis.watame.property.IGuildPropertyMapping;;
 
 /**
  * Listener to check if a user posts a URL but doesn't have embed permissions.
@@ -30,47 +28,52 @@ public class EmbedPermsListener extends ListenerAdapter {
 	/**
 	 * Conditional to check if this functionality is enabled
 	 */
-	private static final IPropertyField<String, Guild, IGuildPropertyMapping> enabled = WatameBot.getInstance()
-			.getPropertyProvider().getProperty("max0r-embedperms-enabled");
+	private static final IProperty<String, Guild, IGuildPropertyMapping> enabled = WatameBot.INSTANCE
+			.getPropertyProvider().getProperty("max0r_embedperms_enabled");
 
 	/**
 	 * Configuration string containing url for no embed permissions image
 	 */
-	private static final IPropertyField<String, Guild, IGuildPropertyMapping> embedURL = WatameBot.getInstance()
-			.getPropertyProvider().getProperty("max0r-embedperms-url");
-
-	/**
-	 * Function to build no embed permissions image
-	 */
-	private static final Function<Guild, MessageEmbed> noEmbedImage = guild -> new EmbedBuilder()
-			.setColor(DiscordUtils.getBotMember(guild).getColor()).setImage(embedURL.get(guild,
-					"https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", IGuildPropertyMapping::getAsString))
-			.build();
+	private static final IProperty<String, Guild, IGuildPropertyMapping> embedURL = WatameBot.INSTANCE
+			.getPropertyProvider().getProperty("max0r_embedperms_url");
 
 	/**
 	 * Predicate to check if a user has embed permissions in a guild channel
 	 */
-	private static BiPredicate<Member, GuildChannel> hasEmbedPerms = (member, channel) -> member
-			.getPermissions(channel).contains(Permission.MESSAGE_EMBED_LINKS);
+	private static BiPredicate<Member, GuildChannel> hasEmbedPerms = (member, channel) -> member.hasPermission(channel,
+			Permission.MESSAGE_EMBED_LINKS);
 
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
 		// Check if from guild
 		if (event.isFromGuild()) {
 			Guild guild = event.getGuild();
-			
+
 			// Check if enabled
 			if (enabled.get(guild, true, IGuildPropertyMapping::getAsBoolean)) {
 				GuildChannel channel = event.getGuildChannel();
 				Message message = event.getMessage();
-				
+
 				// Check for url and user has no embed perms but we do
 				if (CONTAINS_URL.test(message.getContentStripped()) && !hasEmbedPerms.test(event.getMember(), channel)
-						&& hasEmbedPerms.test(DiscordUtils.getBotMember(guild), channel)) {
+						&& hasEmbedPerms.test(guild.getSelfMember(), channel)) {
 
-					message.replyEmbeds(noEmbedImage.apply(guild)).queue();
+					message.replyEmbeds(noEmbedImage(guild)).queue();
 				}
 			}
 		}
+	}
+
+	/**
+	 * Function to build a "No Embed Permissions" embed.
+	 * 
+	 * @param guild - guild to create for
+	 * @return Returns a {@link MessageEmbed} with the guilds specified "No Embed
+	 *         Permissions" image inside an embed
+	 */
+	private static final MessageEmbed noEmbedImage(Guild guild) {
+		return new EmbedBuilder().setColor(guild.getSelfMember().getColor()).setImage(embedURL.get(guild,
+				"https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", IGuildPropertyMapping::getAsString))
+				.build();
 	}
 }
