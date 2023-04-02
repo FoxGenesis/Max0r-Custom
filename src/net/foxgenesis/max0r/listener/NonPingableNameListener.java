@@ -80,7 +80,7 @@ public class NonPingableNameListener extends ListenerAdapter {
 			// Check if bot has permissions to change nicknames
 			if (self.hasPermission(Permission.NICKNAME_MANAGE)) {
 				member.modifyNickname(getReplacement(guild))
-						.reason("Non-Pingable name").queue();;
+						.reason("Non-Pingable name").queue();
 			} else
 				logger.warn("Unable to change nicknames in [{}]! Missing permissions!", guild.getName());
 		}

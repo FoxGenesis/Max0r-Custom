@@ -2,7 +2,7 @@ package net.foxgenesis.max0r;
 
 import java.util.Properties;
 
-import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.Configuration;
 
 import net.foxgenesis.max0r.listener.DadListener;
 import net.foxgenesis.max0r.listener.EmbedPermsListener;
@@ -18,7 +18,7 @@ public class Max0rCustomPlugin extends Plugin {
 	protected void onPropertiesLoaded(Properties properties) {}
 
 	@Override
-	protected void onConfigurationLoaded(String id, PropertiesConfiguration properties) {}
+	protected void onConfigurationLoaded(String id, Configuration properties) {}
 
 	@Override
 	protected void preInit() throws SeverePluginException {}
@@ -39,5 +39,5 @@ public class Max0rCustomPlugin extends Plugin {
 	}
 
 	@Override
-	public void close() {}
+	protected void close() {}
 }
