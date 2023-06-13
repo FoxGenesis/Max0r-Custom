@@ -2,6 +2,7 @@ package net.foxgenesis.max0r.listener;
 
 import static net.foxgenesis.util.StringUtils.CONTAINS_URL;
 
+import java.util.Arrays;
 import java.util.function.BiPredicate;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -54,11 +55,14 @@ public class EmbedPermsListener extends ListenerAdapter {
 				GuildChannel channel = event.getGuildChannel();
 				Message message = event.getMessage();
 
-				// Check for url and user has no embed perms but we do
-				if (CONTAINS_URL.test(message.getContentStripped()) && !hasEmbedPerms.test(event.getMember(), channel)
+				// Check if the user has embed permissions and we do
+				if (!hasEmbedPerms.test(event.getMember(), channel)
 						&& hasEmbedPerms.test(guild.getSelfMember(), channel)) {
 
-					message.replyEmbeds(noEmbedImage(guild)).queue();
+					// Check if the message contains a URL not wrapped in <>
+					if (Arrays.stream(message.getContentStripped().split("<.*?>")).anyMatch(CONTAINS_URL)) {
+						message.replyEmbeds(noEmbedImage(guild)).queue();
+					}
 				}
 			}
 		}
@@ -68,6 +72,7 @@ public class EmbedPermsListener extends ListenerAdapter {
 	 * Function to build a "No Embed Permissions" embed.
 	 * 
 	 * @param guild - guild to create for
+	 * 
 	 * @return Returns a {@link MessageEmbed} with the guilds specified "No Embed
 	 *         Permissions" image inside an embed
 	 */
