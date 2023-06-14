@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>PluginTemplate</name>
+	<name>Max0r-Custom</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -22,7 +22,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1679961895162</id>
+			<id>0</id>
 			<name></name>
 			<type>10</type>
 			<matcher>
@@ -36,7 +36,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1679961895164</id>
+			<id>0</id>
 			<name></name>
 			<type>6</type>
 			<matcher>
