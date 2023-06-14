@@ -47,7 +47,7 @@ public class EmbedPermsListener extends ListenerAdapter {
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
 		// Check if from guild
-		if (event.isFromGuild()) {
+		if (event.isFromGuild() && !event.isWebhookMessage()) {
 			Guild guild = event.getGuild();
 
 			// Check if enabled
@@ -60,7 +60,8 @@ public class EmbedPermsListener extends ListenerAdapter {
 						&& hasEmbedPerms.test(guild.getSelfMember(), channel)) {
 
 					// Check if the message contains a URL not wrapped in <>
-					if (Arrays.stream(message.getContentStripped().split("<.*?>")).anyMatch(CONTAINS_URL)) {
+					if (Arrays.stream(message.getContentStripped().split("<.*?>"))
+							.anyMatch(CONTAINS_URL.and(Message.JUMP_URL_PATTERN.asPredicate().negate()))) {
 						message.replyEmbeds(noEmbedImage(guild)).queue();
 					}
 				}
