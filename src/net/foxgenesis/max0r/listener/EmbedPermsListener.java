@@ -56,7 +56,7 @@ public class EmbedPermsListener extends ListenerAdapter {
 				Message message = event.getMessage();
 
 				// Check if the user has embed permissions and we do
-				if (!hasEmbedPerms.test(event.getMember(), channel)
+				if (event.getMember() != null && !hasEmbedPerms.test(event.getMember(), channel)
 						&& hasEmbedPerms.test(guild.getSelfMember(), channel)) {
 
 					// Check if the message contains a URL not wrapped in <>
