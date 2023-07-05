@@ -124,7 +124,7 @@ public class NonPingableNameListener extends ListenerAdapter {
 			return cf;
 		}
 
-		logger.info("Scanning guild [{}] for non-pingable names...");
+		logger.info("Scanning guild [{}] for non-pingable names...", guild.getName());
 
 		long start = System.nanoTime();
 
