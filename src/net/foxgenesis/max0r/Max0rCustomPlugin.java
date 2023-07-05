@@ -8,6 +8,7 @@ import net.foxgenesis.max0r.listener.DadListener;
 import net.foxgenesis.max0r.listener.EmbedPermsListener;
 import net.foxgenesis.max0r.listener.NonPingableNameListener;
 import net.foxgenesis.max0r.listener.SpazDickListener;
+import net.foxgenesis.max0r.listener.ExclamationNameListener;
 import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.IEventStore;
 import net.foxgenesis.watame.plugin.Plugin;
@@ -27,7 +28,7 @@ public class Max0rCustomPlugin extends Plugin {
 	protected void init(IEventStore builder) throws SeverePluginException {
 		logger.info("Adding listeners");
 		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(), new SpazDickListener(),
-				new NonPingableNameListener());
+				new NonPingableNameListener(), new ExclamationNameListener());
 	}
 
 	@Override
@@ -36,6 +37,7 @@ public class Max0rCustomPlugin extends Plugin {
 	@Override
 	protected void onReady(WatameBot bot) throws SeverePluginException {
 		bot.getJDA().getGuildCache().acceptStream(NonPingableNameListener::scanGuilds);
+		bot.getJDA().getGuildCache().acceptStream(ExclamationNameListener::scanGuilds);
 	}
 
 	@Override
