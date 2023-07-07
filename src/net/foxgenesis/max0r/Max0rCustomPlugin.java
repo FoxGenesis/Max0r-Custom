@@ -26,7 +26,7 @@ public class Max0rCustomPlugin extends Plugin {
 	@Override
 	protected void init(IEventStore builder) throws SeverePluginException {
 		logger.info("Adding listeners");
-		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(), new SpazDickListener(),
+		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(),
 				new NonPingableNameListener());
 	}
 
