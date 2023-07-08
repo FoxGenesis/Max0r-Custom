@@ -7,7 +7,6 @@ import org.apache.commons.configuration2.Configuration;
 import net.foxgenesis.max0r.listener.DadListener;
 import net.foxgenesis.max0r.listener.EmbedPermsListener;
 import net.foxgenesis.max0r.listener.NonPingableNameListener;
-import net.foxgenesis.max0r.listener.SpazDickListener;
 import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.IEventStore;
 import net.foxgenesis.watame.plugin.Plugin;
