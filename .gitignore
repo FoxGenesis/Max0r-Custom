@@ -7,3 +7,4 @@ target/
 /config/
 .pid
 test-deploy-token.txt
+*.csv
