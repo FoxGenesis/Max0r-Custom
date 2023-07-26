@@ -1,6 +1,5 @@
 package net.foxgenesis.max0r.listener;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -29,7 +28,7 @@ public class RandomCats extends ListenerAdapter {
 				event.deferReply().queue();
 				try (FileUpload upload = FileUpload.fromData(catURL.openStream(), "cute cat.png")) {
 					event.getHook().sendFiles(upload).queue();
-				} catch (IOException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 					event.getHook().editOriginalEmbeds(Response.error("An error occured. Please try again later."))
 							.queue();
