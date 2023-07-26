@@ -7,6 +7,7 @@ module watamebot.max0rcustom {
 	requires transitive watamebot;
 	requires org.apache.commons.configuration2;
 	requires org.apache.commons.text;
+	requires org.json;
 	
 	//provides net.foxgenesis.watame.plugin.IPlugin with net.foxgenesis.max0r.Max0rCustomPlugin;
 	provides net.foxgenesis.watame.plugin.Plugin with net.foxgenesis.max0r.Max0rCustomPlugin;
