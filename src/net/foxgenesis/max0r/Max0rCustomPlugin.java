@@ -1,12 +1,17 @@
 package net.foxgenesis.max0r;
 
+import java.util.Collection;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.configuration2.Configuration;
 
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.foxgenesis.max0r.listener.DadListener;
 import net.foxgenesis.max0r.listener.EmbedPermsListener;
 import net.foxgenesis.max0r.listener.NonPingableNameListener;
+import net.foxgenesis.max0r.listener.RandomCats;
 import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.IEventStore;
 import net.foxgenesis.watame.plugin.Plugin;
@@ -25,7 +30,8 @@ public class Max0rCustomPlugin extends Plugin {
 	@Override
 	protected void init(IEventStore builder) throws SeverePluginException {
 		logger.info("Adding listeners");
-		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(), new NonPingableNameListener());
+		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(), new NonPingableNameListener(),
+				new RandomCats());
 	}
 
 	@Override
@@ -38,4 +44,9 @@ public class Max0rCustomPlugin extends Plugin {
 
 	@Override
 	protected void close() {}
+
+	@Override
+	public Collection<CommandData> getCommands() {
+		return Set.of(Commands.slash("cat", "Get a random image of a cat"));
+	}
 }
