@@ -15,14 +15,22 @@ import net.foxgenesis.max0r.listener.RandomCats;
 import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.IEventStore;
 import net.foxgenesis.watame.plugin.Plugin;
+import net.foxgenesis.watame.plugin.PluginConfiguration;
 import net.foxgenesis.watame.plugin.SeverePluginException;
 
+@PluginConfiguration(defaultFile = "/META-INF/cats/settings.properties", identifier = "catSettings", outputFile = "cats/settings.properties")
 public class Max0rCustomPlugin extends Plugin {
+	private String catAPIKey;
+
 	@Override
 	protected void onPropertiesLoaded(Properties properties) {}
 
 	@Override
-	protected void onConfigurationLoaded(String id, Configuration properties) {}
+	protected void onConfigurationLoaded(String id, Configuration properties) {
+		switch (id) {
+			case "catSettings" -> { catAPIKey = properties.getString("thecatapi_key"); }
+		}
+	}
 
 	@Override
 	protected void preInit() throws SeverePluginException {}
@@ -31,7 +39,7 @@ public class Max0rCustomPlugin extends Plugin {
 	protected void init(IEventStore builder) throws SeverePluginException {
 		logger.info("Adding listeners");
 		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(), new NonPingableNameListener(),
-				new RandomCats());
+				new RandomCats(catAPIKey));
 	}
 
 	@Override

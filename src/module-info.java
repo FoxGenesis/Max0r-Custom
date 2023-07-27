@@ -3,6 +3,7 @@ module watamebot.max0rcustom {
 
 	requires transitive watamebot;
 	requires org.json;
+	requires okhttp3;
 	
 	provides net.foxgenesis.watame.plugin.Plugin with net.foxgenesis.max0r.Max0rCustomPlugin;
 
