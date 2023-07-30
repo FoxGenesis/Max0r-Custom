@@ -4,10 +4,6 @@ import java.util.Collection;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.commons.configuration2.Configuration;
-
-import net.dv8tion.jda.api.interactions.commands.build.CommandData;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.foxgenesis.max0r.listener.DadListener;
 import net.foxgenesis.max0r.listener.EmbedPermsListener;
 import net.foxgenesis.max0r.listener.NonPingableNameListener;
@@ -18,8 +14,14 @@ import net.foxgenesis.watame.plugin.Plugin;
 import net.foxgenesis.watame.plugin.PluginConfiguration;
 import net.foxgenesis.watame.plugin.SeverePluginException;
 
+import org.apache.commons.configuration2.Configuration;
+
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+
 @PluginConfiguration(defaultFile = "/META-INF/cats/settings.properties", identifier = "catSettings", outputFile = "cats/settings.properties")
 public class Max0rCustomPlugin extends Plugin {
+
 	private String catAPIKey;
 
 	@Override
@@ -51,7 +53,9 @@ public class Max0rCustomPlugin extends Plugin {
 	}
 
 	@Override
-	protected void close() {}
+	protected void close() {
+
+	}
 
 	@Override
 	public Collection<CommandData> getCommands() {
