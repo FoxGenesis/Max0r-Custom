@@ -16,8 +16,10 @@ import net.foxgenesis.watame.plugin.SeverePluginException;
 
 import org.apache.commons.configuration2.Configuration;
 
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 @PluginConfiguration(defaultFile = "/META-INF/cats/settings.properties", identifier = "catSettings", outputFile = "cats/settings.properties")
 public class Max0rCustomPlugin extends Plugin {
@@ -59,6 +61,7 @@ public class Max0rCustomPlugin extends Plugin {
 
 	@Override
 	public Collection<CommandData> getCommands() {
-		return Set.of(Commands.slash("cat", "Get a random image of a cat"));
+		return Set.of(Commands.slash("cat", "Get a random image of a cat")
+				.addOptions(new OptionData(OptionType.STRING, "breed", "Breed to search for", false, true)));
 	}
 }
