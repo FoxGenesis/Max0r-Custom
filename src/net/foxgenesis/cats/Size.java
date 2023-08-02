@@ -1,5 +1,5 @@
 package net.foxgenesis.cats;
 
 public enum Size {
-	SMALL, MED, FULL;
+	THUMB, SMALL, MED, FULL;
 }
