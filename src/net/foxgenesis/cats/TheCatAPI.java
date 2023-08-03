@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 import net.foxgenesis.cats.bean.Breed;
 import net.foxgenesis.cats.bean.CatPicture;
+import net.foxgenesis.cats.bean.UploadResponse;
 import net.foxgenesis.util.ArrayUtils;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +25,12 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.dv8tion.jda.api.entities.Message.Attachment;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
@@ -45,16 +49,27 @@ public class TheCatAPI {
 		this.apiKey = Optional.ofNullable(key);
 	}
 
+	@Deprecated
 	@NotNull
 	public CompletableFuture<CatPicture[]> search(@NotNull OkHttpClient client, @Nullable Size size,
 			@Nullable MimeType[] mime_types, @Nullable Order order, int page, int limit, @Nullable int[] categorys,
-			@Nullable String[] breeds, boolean onlyBreeds, boolean includeBreeds, boolean includeCategorys) {
+			@Nullable String[] breeds, boolean onlyBreeds, boolean includeBreeds, boolean includeCategories) {
 		return search(client, Optional.ofNullable(size), Optional.ofNullable(mime_types), Optional.ofNullable(order),
 				Optional.ofNullable(page), Optional.ofNullable(limit), Optional.ofNullable(categorys),
 				Optional.ofNullable(breeds), Optional.ofNullable(onlyBreeds), Optional.ofNullable(includeBreeds),
-				Optional.ofNullable(includeCategorys));
+				Optional.ofNullable(includeCategories));
 	}
 
+	@Deprecated
+	@NotNull
+	public CompletableFuture<CatPicture[]> searchUploadedImages(@NotNull OkHttpClient client, @Nullable Order order,
+			int page, int limit, @Nullable String subid, @Nullable int[] categories, @Nullable String[] breeds) {
+		return searchUploadedImages(client, Optional.ofNullable(order), Optional.ofNullable(page),
+				Optional.ofNullable(limit), Optional.ofNullable(subid), Optional.ofNullable(categories),
+				Optional.ofNullable(breeds));
+	}
+
+	@Deprecated
 	@NotNull
 	public CompletableFuture<CatPicture> getPictureFromID(@NotNull OkHttpClient client, @NotNull String id,
 			String subid, Size size, boolean includeVote, boolean includeFavorite) {
@@ -62,12 +77,13 @@ public class TheCatAPI {
 				Optional.ofNullable(includeVote), Optional.ofNullable(includeFavorite));
 	}
 
+	@Deprecated
 	@NotNull
 	public CompletableFuture<CatPicture[]> search(@NotNull OkHttpClient client, @NotNull Optional<Size> size,
 			@NotNull Optional<MimeType[]> mime_types, @NotNull Optional<Order> order, @NotNull Optional<Integer> page,
-			@NotNull Optional<Integer> limit, @NotNull Optional<int[]> categorys, @NotNull Optional<String[]> breeds,
+			@NotNull Optional<Integer> limit, @NotNull Optional<int[]> categories, @NotNull Optional<String[]> breeds,
 			@NotNull Optional<Boolean> hasBreeds, @NotNull Optional<Boolean> includeBreeds,
-			@NotNull Optional<Boolean> includeCategorys) {
+			@NotNull Optional<Boolean> includeCategories) {
 		// Construct query parameters
 		Map<String, String> map = new HashMap<>();
 		map.put("size", size.map(Object::toString).map(String::toLowerCase).orElse(""));
@@ -75,15 +91,69 @@ public class TheCatAPI {
 		map.put("order", order.map(Object::toString).orElse(""));
 		map.put("page", page.map(p -> p + "").orElse(""));
 		map.put("limit", limit.map(l -> l + "").orElse(""));
-		map.put("category_ids", categorys.map(c -> joinInts(",", c)).orElse(""));
+		map.put("category_ids", categories.map(c -> joinInts(",", c)).orElse(""));
 		map.put("breed_ids", breeds.map(ArrayUtils::commaSeparated).orElse(""));
 		map.put("onlyBreeds", hasBreeds.map(b -> "" + b.compareTo(false)).orElse(""));
 		map.put("include_breeds", includeBreeds.map(b -> "" + b.compareTo(false)).orElse(""));
-		map.put("include_categories", includeBreeds.map(b -> "" + b.compareTo(false)).orElse(""));
+		map.put("include_categories", includeCategories.map(b -> "" + b.compareTo(false)).orElse(""));
 
 		// Enqueue and map to result
 		return submit(client, newRequest(Method.GET, "images/search", map, null))
 				.thenApplyAsync(response -> readJSONResponse(response, CatPicture[].class));
+	}
+
+	@Deprecated
+	@NotNull
+	public CompletableFuture<CatPicture[]> searchUploadedImages(@NotNull OkHttpClient client,
+			@NotNull Optional<Order> order, @NotNull Optional<Integer> page, @NotNull Optional<Integer> limit,
+			@NotNull Optional<String> subid, @NotNull Optional<int[]> categories, @NotNull Optional<String[]> breeds) {
+		// Construct query parameters
+		Map<String, String> map = new HashMap<>();
+		map.put("order", order.map(Object::toString).orElse(""));
+		map.put("page", page.map(p -> p + "").orElse(""));
+		map.put("limit", limit.map(l -> l + "").orElse(""));
+		map.put("sub_id", subid.orElse(""));
+		map.put("category_ids", categories.map(c -> joinInts(",", c)).orElse(""));
+		map.put("breed_ids", breeds.map(ArrayUtils::commaSeparated).orElse(""));
+
+		// Enqueue and map to result
+		return submit(client, newRequest(Method.GET, "images", map, null))
+				.thenApplyAsync(response -> readJSONResponse(response, CatPicture[].class));
+	}
+
+	@NotNull
+	public <T> CompletableFuture<T> search(@NotNull OkHttpClient client, SearchRequest<T> request) {
+		return submit(client, newRequest(Method.GET, request.getEndpoint(), request.getQueryParameters(), null))
+				.thenApplyAsync(response -> readJSONResponse(response, request.getResponseType()));
+	}
+
+	@NotNull
+	public CompletableFuture<UploadResponse> uploadPicture(@NotNull OkHttpClient client, @NotNull Attachment attachment,
+			@NotNull String subid) {
+		// Validate attachment
+		if (attachment.isVideo())
+			return CompletableFuture.failedFuture(new IllegalArgumentException("Unable to upload videos"));
+		if (!(attachment.getFileExtension() == null || attachment.getFileExtension().matches("jpg|jpeg|png|gif")))
+			return CompletableFuture.failedFuture(new IllegalArgumentException("Invalid file type"));
+
+		// Download image to byte array
+		return attachment.getProxy().download().thenApplyAsync(in -> {
+			try {
+				return in.readAllBytes();
+			} catch (IOException e) {
+				throw new CompletionException(e);
+			}
+		}).thenComposeAsync(data -> {
+			// Add request body data
+			MultipartBody.Builder builder = new MultipartBody.Builder();
+			builder.setType(MultipartBody.FORM);
+			builder.addFormDataPart("sub_id", subid);
+			builder.addFormDataPart("file", attachment.getFileName(),
+					RequestBody.create(data, MediaType.parse(attachment.getContentType())));
+
+			// Enqueue and map to result
+			return submit(client, newRequest(Method.POST, "images/upload", null, builder::build));
+		}).thenApplyAsync(response -> readJSONResponse(response, UploadResponse.class));
 	}
 
 	@NotNull
@@ -140,14 +210,17 @@ public class TheCatAPI {
 		// Construct a new request builder
 		Builder builder = new Request.Builder();
 		builder.url(httpBuilder.build());
-		builder.addHeader("Content-Type", "application/json");
+
+		// Add request body if specified
+		if (body != null) {
+			RequestBody b = body.get();
+			builder.addHeader("Content-Type", b.contentType().toString());
+			builder.method(method.name().toUpperCase(), b);
+		} else
+			builder.addHeader("Content-Type", "application/json");
 
 		// Add API key if present
 		apiKey.ifPresent(key -> builder.addHeader("x-api-key", key));
-
-		// Add request body if specified
-		if (body != null)
-			builder.method(method.name().toUpperCase(), body.get());
 
 		// Build the request
 		return builder.build();
@@ -195,15 +268,24 @@ public class TheCatAPI {
 	 * @return Returns an instance of the {@code javaBean} that was constructed with
 	 *         the response's {@link okhttp3.ResponseBody#string() body} content
 	 */
+	@Nullable
 	private static <T> T readJSONResponse(Response response, Class<? extends T> javaBean) {
 		// Ensure content type is application/json
 		if (!response.body().contentType().subtype().equals("json"))
 			throw new CompletionException(new IOException("Returned content type is not application/json"));
 
-		// Construct the JavaBean from the response body
-		ObjectMapper mapper = new ObjectMapper();
-		try (JsonParser parser = mapper.createParser(response.body().string())) {
-			return mapper.readValue(parser, javaBean);
+		try {
+			String body = response.body().string();
+
+			// Check for empty body
+			if (body.equals("[]") || body.equals("{}"))
+				return null;
+
+			// Construct the JavaBean from the response body
+			ObjectMapper mapper = new ObjectMapper();
+			try (JsonParser parser = mapper.createParser(body)) {
+				return mapper.readValue(parser, javaBean);
+			}
 		} catch (IOException e) {
 			throw new CompletionException(e);
 		}

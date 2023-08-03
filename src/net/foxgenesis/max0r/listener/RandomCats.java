@@ -1,12 +1,15 @@
 package net.foxgenesis.max0r.listener;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import net.foxgenesis.cats.Size;
+import net.foxgenesis.cats.Order;
+import net.foxgenesis.cats.SearchRequest;
 import net.foxgenesis.cats.TheCatAPI;
 import net.foxgenesis.cats.bean.Breed;
 import net.foxgenesis.cats.bean.CatPicture;
@@ -17,11 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import okhttp3.OkHttpClient;
@@ -30,6 +36,10 @@ public class RandomCats extends ListenerAdapter {
 	private static final Logger logger = LoggerFactory.getLogger(RandomCats.class);
 
 	private static final Emoji EMOJI_HAPPY = Emoji.fromCustom("happeh", 478378484025131010L, false);
+
+	private static final String FOOTER_TEXT = "via thecatapi.com";
+	private static final String FOOTER_ICON = "https://thecatapi.com/favicon.ico";
+
 	private static final String FIELD_FORMAT = "**%s:** %s\n";
 	private static final String FLAG_FORMAT = ":flag_%s:";
 
@@ -39,37 +49,83 @@ public class RandomCats extends ListenerAdapter {
 	public RandomCats(String apiKey) {
 		api = new TheCatAPI(apiKey);
 
-		client = new OkHttpClient().newBuilder().readTimeout(3, TimeUnit.SECONDS).callTimeout(3, TimeUnit.SECONDS)
-				.connectTimeout(3, TimeUnit.SECONDS).build();
+		client = new OkHttpClient().newBuilder().callTimeout(3, TimeUnit.SECONDS).build();
 	}
 
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-		switch (event.getFullCommandName()) {
-			case "cat" -> {
-				String breedOption = event.getOption("breed", OptionMapping::getAsString);
-				String[] breeds = breedOption != null ? new String[] { breedOption } : null;
+		try {
+			switch (event.getFullCommandName()) {
+				case "cat search" -> {
+					// Parse options
+					String[] breeds = { event.getOption("breed", OptionMapping::getAsString) };
 
-				event.deferReply().queue();
+					// Create request
+					SearchRequest.Builder.Default builder = new SearchRequest.Builder.Default();
+					builder.setBreeds(breeds);
 
-				api.search(client, Size.SMALL, null, null, 0, 1, null, breeds, false, true, true)
-						.whenCompleteAsync((list, e) -> {
-							if (e != null) {
-								event.replyEmbeds(Response.error("An error occured. Please try again later.")).queue();
-								logger.error("Error occured during api request", e);
-							} else {
-								try {
-									// Send response
-									event.getHook().editOriginalEmbeds(createCatEmbed(list[0]))
-											.flatMap(message -> message.addReaction(EMOJI_HAPPY)).queue();
-								} catch (Exception e2) {
-									event.replyEmbeds(Response.error("An error occured. Please try again later."))
-											.queue();
-									logger.error("Error occured during api request", e2);
-								}
-							}
-						});
+					// Search
+					api.search(client, builder.build())
+							.whenCompleteAsync((list, e) -> handleSearchResult(list, e, event));
+				}
+				case "cat search-server" -> {
+					// Parse options
+					String[] breeds = { event.getOption("breed", OptionMapping::getAsString) };
+					String subid = Optional.ofNullable(event.getOption("user", OptionMapping::getAsMember))
+							.map(Member::getId).orElse("");
+
+					// Build request
+					SearchRequest.Builder.Uploaded builder = new SearchRequest.Builder.Uploaded();
+					builder.setBreeds(breeds);
+					builder.setSubID(subid);
+					builder.setOrder(Order.RANDOM);
+					builder.setLimit(1);
+
+					// Search
+					api.search(client, builder.build())
+							.whenCompleteAsync((list, e) -> handleSearchResult(list, e, event));
+				}
+				case "catupload" -> {
+					Attachment attachment = event.getOption("file", OptionMapping::getAsAttachment);
+					String subid = event.getMember().getId();
+
+					event.deferReply().queue();
+
+					// New client because we are doing a longer operation than normal
+					OkHttpClient tempClient = client.newBuilder().callTimeout(10, TimeUnit.SECONDS).build();
+					// Upload picture
+					api.uploadPicture(tempClient, attachment, subid).whenCompleteAsync((response, e) -> {
+						// Check for errors
+						if (e != null) {
+							event.getHook()
+									.editOriginalEmbeds(Response.error("An error occured. Please try again later."))
+									.queue();
+							logger.error("Error occured during api request", e);
+							return;
+						}
+
+						// Create embed
+						EmbedBuilder builder = new EmbedBuilder();
+						builder.setColor(Colors.SUCCESS);
+						builder.setTitle("Uploaded");
+						builder.setImage(response.getUrl());
+						builder.addField("Pending", "" + response.isPending(), true);
+						builder.addField("Approved", "" + response.isApproved(), true);
+						builder.setFooter(FOOTER_TEXT, FOOTER_ICON);
+
+						// Display result
+						event.getHook().editOriginalEmbeds(builder.build()).queue();
+					});
+				}
 			}
+		} catch (Exception e) {
+			logger.error("Error in RandomCats", e);
+			MessageEmbed embed = Response.error("An error occured. Please try again later.");
+
+			if (event.isAcknowledged())
+				event.getHook().editOriginalEmbeds(embed).setReplace(true).queue();
+			else
+				event.replyEmbeds(embed).queue();
 		}
 	}
 
@@ -86,15 +142,15 @@ public class RandomCats extends ListenerAdapter {
 								Stream<Pair<String, Breed>> stream = Arrays.stream(breeds)
 										.mapMulti((Breed breed, Consumer<Pair<String, Breed>> consumer) -> {
 											// Add breed name
-											consumer.accept(new Pair<String, Breed>(breed.getName(), breed));
+											consumer.accept(new Pair<>(breed.getName(), breed));
 
 											// Add all alternative names if present
 											boolean hasAltNames = !(breed.getAlt_names() == null
 													|| breed.getAlt_names().trim().isBlank());
 											if (hasAltNames)
 												for (String name : breed.getAlt_names().split("[,/]"))
-													consumer.accept(new Pair<String, Breed>(name.trim(), breed));
-										}).sorted((a, b) -> a.key.compareTo(b.key));
+													consumer.accept(new Pair<>(name.trim(), breed));
+										}).sorted(Comparator.comparing(a -> a.key));
 
 								// Filter stream if user has typed something
 								String option = event.getFocusedOption().getValue();
@@ -118,19 +174,33 @@ public class RandomCats extends ListenerAdapter {
 		}
 	}
 
-	private static MessageEmbed createCatEmbed(CatPicture cat) {
+	private static void handleSearchResult(CatPicture[] list, Throwable e, IReplyCallback event) {
+		// Check for errors
+		if (e != null) {
+			event.replyEmbeds(Response.error("An error occured. Please try again later.")).queue();
+			logger.error("Error occured during api request", e);
+			return;
+		}
+		if (list == null || list.length == 0) {
+			event.replyEmbeds(Response.error("No image found")).queue();
+			return;
+		}
+
+		// Get first result
+		CatPicture cat = list[0];
+
 		// Construct embed
 		EmbedBuilder builder = new EmbedBuilder();
 		builder.setColor(Colors.INFO);
-		// builder.setTitle(":cat: Meow!");
 		builder.setImage(cat.getUrl());
-		builder.setFooter("via thecatapi.com", "https://thecatapi.com/favicon.ico");
+		builder.setFooter(FOOTER_TEXT, FOOTER_ICON);
+
+		StringBuilder b = new StringBuilder();
 
 		// Append breed information if present
 		if (cat.getBreeds() != null && cat.getBreeds().length > 0) {
 			Breed breed = cat.getBreeds()[0];
 
-			StringBuilder b = new StringBuilder();
 			b.append(FIELD_FORMAT.formatted("Breed", breed.getName()));
 			b.append(FIELD_FORMAT.formatted("Origin",
 					FLAG_FORMAT.formatted(breed.getCountry_code().toLowerCase()) + " " + breed.getOrigin()));
@@ -143,10 +213,29 @@ public class RandomCats extends ListenerAdapter {
 
 			b.append("\n");
 			b.append("[Wikipedia Page](" + breed.getWikipedia_url() + ")");
-
-			builder.setDescription(b.toString().trim());
 		}
-		return builder.build();
+
+		// Append discord user if present
+		String subid = cat.getSub_id();
+		if (!(subid == null || subid.isBlank())) {
+			b.append("\n");
+
+			int index = subid.indexOf(':');
+			if (index == -1)
+				index = subid.length();
+
+			b.append(FIELD_FORMAT.formatted("From", "<@" + subid.substring(0, index) + ">"));
+		}
+
+		// Build description
+		builder.setDescription(b.toString().trim());
+
+		// Send message
+		event.replyEmbeds(builder.build())
+				// Get sent message
+				.flatMap(hook -> hook.retrieveOriginal())
+				// Add happy emoji
+				.flatMap(message -> message.addReaction(EMOJI_HAPPY)).queue();
 	}
 
 	private static record Pair<T1, T2>(T1 key, T2 value) {}

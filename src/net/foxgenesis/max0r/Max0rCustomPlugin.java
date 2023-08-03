@@ -16,10 +16,12 @@ import net.foxgenesis.watame.plugin.SeverePluginException;
 
 import org.apache.commons.configuration2.Configuration;
 
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 @PluginConfiguration(defaultFile = "/META-INF/cats/settings.properties", identifier = "catSettings", outputFile = "cats/settings.properties")
 public class Max0rCustomPlugin extends Plugin {
@@ -55,13 +57,22 @@ public class Max0rCustomPlugin extends Plugin {
 	}
 
 	@Override
-	protected void close() {
-
-	}
+	protected void close() {}
 
 	@Override
 	public Collection<CommandData> getCommands() {
-		return Set.of(Commands.slash("cat", "Get a random image of a cat")
-				.addOptions(new OptionData(OptionType.STRING, "breed", "Breed to search for", false, true)));
+		return Set.of(
+				// Search cat images
+				Commands.slash("cat", "Get images of cats").addSubcommands(
+						new SubcommandData("search", "Search for images of cats").addOption(OptionType.STRING, "breed",
+								"Breed to search for", false, true),
+						new SubcommandData("search-server", "Search for images of cats from uploaded images")
+								.addOption(OptionType.USER, "user", "From server member")
+								.addOption(OptionType.STRING, "breed", "Breed to search for", false, true)),
+
+				// Upload cat pictures
+				Commands.slash("catupload", "Upload a picture of a cat").setGuildOnly(true)
+						.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+						.addOption(OptionType.ATTACHMENT, "file", "Cat picture to upload", true));
 	}
 }
