@@ -123,8 +123,12 @@ public class CatPicture {
 	@Override
 	public String toString() {
 		return "CatPicture [" + (id != null ? "id=" + id + ", " : "") + (url != null ? "url=" + url + ", " : "")
-				+ "width=" + width + ", height=" + height + ", "
+				+ "width=" + width + ", height=" + height + ", " + (sub_id != null ? "sub_id=" + sub_id + ", " : "")
+				+ (created_at != null ? "created_at=" + created_at + ", " : "")
+				+ (original_filename != null ? "original_filename=" + original_filename + ", " : "")
+				+ (breed_ids != null ? "breed_ids=" + Arrays.toString(breed_ids) + ", " : "")
 				+ (breeds != null ? "breeds=" + Arrays.toString(breeds) + ", " : "")
 				+ (categories != null ? "categories=" + Arrays.toString(categories) : "") + "]";
 	}
+
 }

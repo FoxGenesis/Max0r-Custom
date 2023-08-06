@@ -15,7 +15,6 @@ import java.util.function.Supplier;
 import net.foxgenesis.cats.bean.Breed;
 import net.foxgenesis.cats.bean.CatPicture;
 import net.foxgenesis.cats.bean.UploadResponse;
-import net.foxgenesis.util.ArrayUtils;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,78 +46,6 @@ public class TheCatAPI {
 
 	public TheCatAPI(@Nullable String key) {
 		this.apiKey = Optional.ofNullable(key);
-	}
-
-	@Deprecated
-	@NotNull
-	public CompletableFuture<CatPicture[]> search(@NotNull OkHttpClient client, @Nullable Size size,
-			@Nullable MimeType[] mime_types, @Nullable Order order, int page, int limit, @Nullable int[] categorys,
-			@Nullable String[] breeds, boolean onlyBreeds, boolean includeBreeds, boolean includeCategories) {
-		return search(client, Optional.ofNullable(size), Optional.ofNullable(mime_types), Optional.ofNullable(order),
-				Optional.ofNullable(page), Optional.ofNullable(limit), Optional.ofNullable(categorys),
-				Optional.ofNullable(breeds), Optional.ofNullable(onlyBreeds), Optional.ofNullable(includeBreeds),
-				Optional.ofNullable(includeCategories));
-	}
-
-	@Deprecated
-	@NotNull
-	public CompletableFuture<CatPicture[]> searchUploadedImages(@NotNull OkHttpClient client, @Nullable Order order,
-			int page, int limit, @Nullable String subid, @Nullable int[] categories, @Nullable String[] breeds) {
-		return searchUploadedImages(client, Optional.ofNullable(order), Optional.ofNullable(page),
-				Optional.ofNullable(limit), Optional.ofNullable(subid), Optional.ofNullable(categories),
-				Optional.ofNullable(breeds));
-	}
-
-	@Deprecated
-	@NotNull
-	public CompletableFuture<CatPicture> getPictureFromID(@NotNull OkHttpClient client, @NotNull String id,
-			String subid, Size size, boolean includeVote, boolean includeFavorite) {
-		return getPictureFromID(client, id, Optional.ofNullable(subid), Optional.ofNullable(size),
-				Optional.ofNullable(includeVote), Optional.ofNullable(includeFavorite));
-	}
-
-	@Deprecated
-	@NotNull
-	public CompletableFuture<CatPicture[]> search(@NotNull OkHttpClient client, @NotNull Optional<Size> size,
-			@NotNull Optional<MimeType[]> mime_types, @NotNull Optional<Order> order, @NotNull Optional<Integer> page,
-			@NotNull Optional<Integer> limit, @NotNull Optional<int[]> categories, @NotNull Optional<String[]> breeds,
-			@NotNull Optional<Boolean> hasBreeds, @NotNull Optional<Boolean> includeBreeds,
-			@NotNull Optional<Boolean> includeCategories) {
-		// Construct query parameters
-		Map<String, String> map = new HashMap<>();
-		map.put("size", size.map(Object::toString).map(String::toLowerCase).orElse(""));
-		map.put("mime_types", mime_types.map(ArrayUtils::commaSeparated).map(String::toLowerCase).orElse(""));
-		map.put("order", order.map(Object::toString).orElse(""));
-		map.put("page", page.map(p -> p + "").orElse(""));
-		map.put("limit", limit.map(l -> l + "").orElse(""));
-		map.put("category_ids", categories.map(c -> joinInts(",", c)).orElse(""));
-		map.put("breed_ids", breeds.map(ArrayUtils::commaSeparated).orElse(""));
-		map.put("onlyBreeds", hasBreeds.map(b -> "" + b.compareTo(false)).orElse(""));
-		map.put("include_breeds", includeBreeds.map(b -> "" + b.compareTo(false)).orElse(""));
-		map.put("include_categories", includeCategories.map(b -> "" + b.compareTo(false)).orElse(""));
-
-		// Enqueue and map to result
-		return submit(client, newRequest(Method.GET, "images/search", map, null))
-				.thenApplyAsync(response -> readJSONResponse(response, CatPicture[].class));
-	}
-
-	@Deprecated
-	@NotNull
-	public CompletableFuture<CatPicture[]> searchUploadedImages(@NotNull OkHttpClient client,
-			@NotNull Optional<Order> order, @NotNull Optional<Integer> page, @NotNull Optional<Integer> limit,
-			@NotNull Optional<String> subid, @NotNull Optional<int[]> categories, @NotNull Optional<String[]> breeds) {
-		// Construct query parameters
-		Map<String, String> map = new HashMap<>();
-		map.put("order", order.map(Object::toString).orElse(""));
-		map.put("page", page.map(p -> p + "").orElse(""));
-		map.put("limit", limit.map(l -> l + "").orElse(""));
-		map.put("sub_id", subid.orElse(""));
-		map.put("category_ids", categories.map(c -> joinInts(",", c)).orElse(""));
-		map.put("breed_ids", breeds.map(ArrayUtils::commaSeparated).orElse(""));
-
-		// Enqueue and map to result
-		return submit(client, newRequest(Method.GET, "images", map, null))
-				.thenApplyAsync(response -> readJSONResponse(response, CatPicture[].class));
 	}
 
 	@NotNull
@@ -289,18 +216,5 @@ public class TheCatAPI {
 		} catch (IOException e) {
 			throw new CompletionException(e);
 		}
-	}
-
-	private static String joinInts(String delim, int[] arr) {
-		if (arr == null)
-			return null;
-
-		String out = "";
-		for (int i = 0; i < arr.length; i++) {
-			if (i != 0)
-				out += ',';
-			out += arr[i];
-		}
-		return out;
 	}
 }

@@ -13,6 +13,7 @@ import net.foxgenesis.cats.SearchRequest;
 import net.foxgenesis.cats.TheCatAPI;
 import net.foxgenesis.cats.bean.Breed;
 import net.foxgenesis.cats.bean.CatPicture;
+import net.foxgenesis.util.Pair;
 import net.foxgenesis.watame.util.Colors;
 import net.foxgenesis.watame.util.Response;
 
@@ -94,28 +95,31 @@ public class RandomCats extends ListenerAdapter {
 					// New client because we are doing a longer operation than normal
 					OkHttpClient tempClient = client.newBuilder().callTimeout(10, TimeUnit.SECONDS).build();
 					// Upload picture
-					api.uploadPicture(tempClient, attachment, subid).whenCompleteAsync((response, e) -> {
-						// Check for errors
-						if (e != null) {
-							event.getHook()
-									.editOriginalEmbeds(Response.error("An error occured. Please try again later."))
-									.queue();
-							logger.error("Error occured during api request", e);
-							return;
-						}
+					api.uploadPicture(tempClient, attachment, subid).orTimeout(10, TimeUnit.SECONDS)
+							.whenCompleteAsync((response, e) -> {
+								// Check for errors
+								if (e != null) {
+									event.getHook()
+											.editOriginalEmbeds(
+													Response.error("An error occured. Please try again later."))
+											.queue();
+									logger.error("Error occured during api request", e);
+									return;
+								}
 
-						// Create embed
-						EmbedBuilder builder = new EmbedBuilder();
-						builder.setColor(Colors.SUCCESS);
-						builder.setTitle("Uploaded");
-						builder.setImage(response.getUrl());
-						builder.addField("Pending", "" + response.isPending(), true);
-						builder.addField("Approved", "" + response.isApproved(), true);
-						builder.setFooter(FOOTER_TEXT, FOOTER_ICON);
+								// Create embed
+								EmbedBuilder builder = new EmbedBuilder();
+								builder.setColor(response.isApproved() ? Colors.SUCCESS
+										: response.isPending() ? Colors.WARNING : Colors.ERROR);
+								builder.setTitle("Uploaded");
+								builder.setImage(response.getUrl());
+								builder.addField("Pending", "" + response.isPending(), true);
+								builder.addField("Approved", "" + response.isApproved(), true);
+								builder.setFooter(FOOTER_TEXT, FOOTER_ICON);
 
-						// Display result
-						event.getHook().editOriginalEmbeds(builder.build()).queue();
-					});
+								// Display result
+								event.getHook().editOriginalEmbeds(builder.build()).queue();
+							});
 				}
 			}
 		} catch (Exception e) {
@@ -136,34 +140,32 @@ public class RandomCats extends ListenerAdapter {
 				switch (event.getFocusedOption().getName()) {
 					case "breed" -> {
 						// Get all cat breeds
-						api.getBreedList(client).whenCompleteAsync((breeds, e) -> {
-							if (e == null) {
-								// Construct a stream of breeds with all breed names and their alternative names
-								Stream<Pair<String, Breed>> stream = Arrays.stream(breeds)
-										.mapMulti((Breed breed, Consumer<Pair<String, Breed>> consumer) -> {
-											// Add breed name
-											consumer.accept(new Pair<>(breed.getName(), breed));
+						api.getBreedList(client).thenAcceptAsync(breeds -> {
+							// Construct a stream of breeds with all breed names and their alternative names
+							Stream<Pair<String, Breed>> stream = Arrays.stream(breeds)
+									.mapMulti((Breed breed, Consumer<Pair<String, Breed>> consumer) -> {
+										// Add breed name
+										consumer.accept(new Pair<>(breed.getName(), breed));
 
-											// Add all alternative names if present
-											boolean hasAltNames = !(breed.getAlt_names() == null
-													|| breed.getAlt_names().trim().isBlank());
-											if (hasAltNames)
-												for (String name : breed.getAlt_names().split("[,/]"))
-													consumer.accept(new Pair<>(name.trim(), breed));
-										}).sorted(Comparator.comparing(a -> a.key));
+										// Add all alternative names if present
+										boolean hasAltNames = !(breed.getAlt_names() == null
+												|| breed.getAlt_names().trim().isBlank());
+										if (hasAltNames)
+											for (String name : breed.getAlt_names().split("[,/]"))
+												consumer.accept(new Pair<>(name.trim(), breed));
+									}).sorted(Comparator.comparing(a -> a.key()));
 
-								// Filter stream if user has typed something
-								String option = event.getFocusedOption().getValue();
-								if (!(option == null || option.isBlank())) {
-									String o = option.toLowerCase();
-									stream = stream.filter(pair -> pair.key.toLowerCase().contains(o));
-								}
-
-								// Map results to choices and reply
-								List<Command.Choice> choices = stream
-										.map(pair -> new Command.Choice(pair.key, pair.value.getId())).toList();
-								event.replyChoices(choices.subList(0, Math.min(25, choices.size()))).queue();
+							// Filter stream if user has typed something
+							String option = event.getFocusedOption().getValue();
+							if (!(option == null || option.isBlank())) {
+								String o = option.toLowerCase();
+								stream = stream.filter(pair -> pair.key().toLowerCase().contains(o));
 							}
+
+							// Map results to choices and reply
+							List<Command.Choice> choices = stream
+									.map(pair -> new Command.Choice(pair.key(), pair.value().getId())).toList();
+							event.replyChoices(choices.subList(0, Math.min(25, choices.size()))).queue();
 						}).whenCompleteAsync((v, e) -> {
 							if (e != null)
 								logger.error("Error occured during api request", e);
@@ -211,8 +213,10 @@ public class RandomCats extends ListenerAdapter {
 
 			b.append(FIELD_FORMAT.formatted("Temperament", breed.getTemperament()));
 
-			b.append("\n");
-			b.append("[Wikipedia Page](" + breed.getWikipedia_url() + ")");
+			if (!(breed.getWikipedia_url() == null || breed.getWikipedia_url().isBlank())) {
+				b.append("\n");
+				b.append("[Wikipedia Page](" + breed.getWikipedia_url() + ")");
+			}
 		}
 
 		// Append discord user if present
@@ -224,7 +228,7 @@ public class RandomCats extends ListenerAdapter {
 			if (index == -1)
 				index = subid.length();
 
-			b.append(FIELD_FORMAT.formatted("From", "<@" + subid.substring(0, index) + ">"));
+			b.append(FIELD_FORMAT.formatted("Uploaded by", "<@" + subid.substring(0, index) + ">"));
 		}
 
 		// Build description
@@ -237,6 +241,4 @@ public class RandomCats extends ListenerAdapter {
 				// Add happy emoji
 				.flatMap(message -> message.addReaction(EMOJI_HAPPY)).queue();
 	}
-
-	private static record Pair<T1, T2>(T1 key, T2 value) {}
 }
