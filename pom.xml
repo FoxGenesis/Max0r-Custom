@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.foxgenesis.max0r</groupId>
 	<artifactId>max0r-custom-plugin</artifactId>
-	<version>1.0.7</version>
+	<version>1.1.1</version>
 	<properties>
 		<project.build.sourceEncoding>ASCII</project.build.sourceEncoding>
 	</properties>
@@ -12,12 +12,12 @@
 		<dependency>
 			<groupId>net.foxgenesis.watame</groupId>
 			<artifactId>watamebot</artifactId>
-			<version>1.1.0</version>
+			<version>1.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.15.2</version>
+			<version>2.14.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
 		<dependency>

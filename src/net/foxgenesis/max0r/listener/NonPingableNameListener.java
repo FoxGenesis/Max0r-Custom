@@ -5,6 +5,15 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import net.foxgenesis.property.PropertyMapping;
+import net.foxgenesis.property.PropertyType;
+import net.foxgenesis.util.MethodTimer;
+import net.foxgenesis.util.StreamUtils;
+import net.foxgenesis.watame.plugin.Plugin;
+import net.foxgenesis.watame.property.PluginProperty;
+import net.foxgenesis.watame.property.PluginPropertyMapping;
+import net.foxgenesis.watame.property.PluginPropertyProvider;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,12 +24,6 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.foxgenesis.property.IProperty;
-import net.foxgenesis.property.IPropertyProvider;
-import net.foxgenesis.util.MethodTimer;
-import net.foxgenesis.util.StreamUtils;
-import net.foxgenesis.watame.WatameBot;
-import net.foxgenesis.watame.property.IGuildPropertyMapping;
 
 /**
  * Listener class that ensures all members nicknames are pingable.
@@ -44,33 +47,34 @@ public class NonPingableNameListener extends ListenerAdapter {
 	/**
 	 * If enabled property
 	 */
-	private static final IProperty<String, Guild, IGuildPropertyMapping> enabled;
+	private final PluginProperty enabled;
 
 	/**
 	 * Name replacement property
 	 */
-	private static final IProperty<String, Guild, IGuildPropertyMapping> replacement;
+	private final PluginProperty replacement;
 
-	static {
-		IPropertyProvider<String, Guild, IGuildPropertyMapping> provider = WatameBot.INSTANCE
-				.getPropertyProvider();
-
-		enabled = provider.getProperty("max0r_pingable_enabled");
-		replacement = provider.getProperty("max0r_pingable_replacement");
+	public NonPingableNameListener(Plugin plugin, PluginPropertyProvider provider) {
+		this.enabled = provider.upsertProperty(plugin, "pingable.enabled", true, PropertyType.PLAIN);
+		this.replacement = provider.upsertProperty(plugin, "pingable.replacement", true, PropertyType.PLAIN);
 	}
 
 	@Override
-	public void onGuildMemberUpdateNickname(GuildMemberUpdateNicknameEvent event) { checkName(event.getMember()); }
+	public void onGuildMemberUpdateNickname(GuildMemberUpdateNicknameEvent event) {
+		checkName(event.getMember());
+	}
 
 	@Override
-	public void onGuildMemberJoin(GuildMemberJoinEvent e) { checkName(e.getMember()); }
+	public void onGuildMemberJoin(GuildMemberJoinEvent e) {
+		checkName(e.getMember());
+	}
 
 	/**
 	 * Ensure that a member's name is pingable
 	 * 
 	 * @param member - member to check
 	 */
-	private static void checkName(Member member) {
+	private void checkName(Member member) {
 		Guild guild = member.getGuild();
 		Member self = guild.getSelfMember();
 
@@ -79,8 +83,7 @@ public class NonPingableNameListener extends ListenerAdapter {
 
 			// Check if bot has permissions to change nicknames
 			if (self.hasPermission(Permission.NICKNAME_MANAGE)) {
-				member.modifyNickname(getReplacement(guild))
-						.reason("Non-Pingable name").queue();
+				member.modifyNickname(getReplacement(guild)).reason("Non-Pingable name").queue();
 			} else
 				logger.warn("Unable to change nicknames in [{}]! Missing permissions!", guild.getName());
 		}
@@ -91,10 +94,9 @@ public class NonPingableNameListener extends ListenerAdapter {
 	 * 
 	 * @param guilds - stream of guilds to test
 	 */
-	public static void scanGuilds(Stream<Guild> guilds) {
+	public void scanGuilds(Stream<Guild> guilds) {
 		logger.info("Scanning all guilds...");
-		CompletableFuture.allOf(guilds.filter(NonPingableNameListener::isEnabled)
-				.map(NonPingableNameListener::scanGuild).toArray(CompletableFuture[]::new))
+		CompletableFuture.allOf(guilds.filter(this::isEnabled).map(this::scanGuild).toArray(CompletableFuture[]::new))
 				.whenComplete((v, err) -> logger.info("Scan completed!"));
 	}
 
@@ -102,10 +104,11 @@ public class NonPingableNameListener extends ListenerAdapter {
 	 * Scan a guild for non-pingable names.
 	 * 
 	 * @param guild - guild to check
+	 * 
 	 * @return Returns a {@link CompletableFuture} that completes normally when all
 	 *         names have been changed
 	 */
-	public static CompletableFuture<Void> scanGuild(Guild guild) {
+	public CompletableFuture<Void> scanGuild(Guild guild) {
 		CompletableFuture<Void> cf = new CompletableFuture<>();
 
 		// Check if members are loaded
@@ -156,13 +159,12 @@ public class NonPingableNameListener extends ListenerAdapter {
 		});
 	}
 
-	private static boolean isEnabled(Guild guild) {
-		return enabled.get(guild, false, IGuildPropertyMapping::getAsBoolean);
+	private boolean isEnabled(Guild guild) {
+		return enabled.get(guild, () -> false, PropertyMapping::getAsBoolean);
 	}
-	
-	private static String getReplacement(Guild guild) {
-		String set = NonPingableNameListener.replacement.get(guild, "Pingable name only",
-				IGuildPropertyMapping::getAsString);
+
+	private String getReplacement(Guild guild) {
+		String set = replacement.get(guild, () -> "Pingable name only", PluginPropertyMapping::getAsString);
 		return set.length() < 3 ? "Pingable name only" : set;
 	}
 }

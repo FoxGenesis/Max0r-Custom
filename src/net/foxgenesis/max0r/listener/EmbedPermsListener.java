@@ -5,6 +5,13 @@ import static net.foxgenesis.util.StringUtils.CONTAINS_URL;
 import java.util.Arrays;
 import java.util.function.BiPredicate;
 
+import net.foxgenesis.property.PropertyMapping;
+import net.foxgenesis.property.PropertyType;
+import net.foxgenesis.watame.plugin.Plugin;
+import net.foxgenesis.watame.property.PluginProperty;
+import net.foxgenesis.watame.property.PluginPropertyMapping;
+import net.foxgenesis.watame.property.PluginPropertyProvider;
+
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -13,10 +20,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.foxgenesis.property.IProperty;
-import net.foxgenesis.watame.WatameBot;
-import net.foxgenesis.watame.property.IGuildPropertyMapping;;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;;
 
 /**
  * Listener to check if a user posts a URL but doesn't have embed permissions.
@@ -25,24 +29,19 @@ import net.foxgenesis.watame.property.IGuildPropertyMapping;;
  *
  */
 public class EmbedPermsListener extends ListenerAdapter {
-
-	/**
-	 * Conditional to check if this functionality is enabled
-	 */
-	private static final IProperty<String, Guild, IGuildPropertyMapping> enabled = WatameBot.INSTANCE
-			.getPropertyProvider().getProperty("max0r_embedperms_enabled");
-
-	/**
-	 * Configuration string containing url for no embed permissions image
-	 */
-	private static final IProperty<String, Guild, IGuildPropertyMapping> embedURL = WatameBot.INSTANCE
-			.getPropertyProvider().getProperty("max0r_embedperms_url");
-
 	/**
 	 * Predicate to check if a user has embed permissions in a guild channel
 	 */
 	private static BiPredicate<Member, GuildChannel> hasEmbedPerms = (member, channel) -> member.hasPermission(channel,
 			Permission.MESSAGE_EMBED_LINKS);
+
+	private final PluginProperty enabled;
+	private final PluginProperty embedURL;
+
+	public EmbedPermsListener(Plugin plugin, PluginPropertyProvider provider) {
+		enabled = provider.upsertProperty(plugin, "embedperms.enabled", true, PropertyType.PLAIN);
+		embedURL = provider.upsertProperty(plugin, "embedperms.url", true, PropertyType.PLAIN);
+	}
 
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
@@ -51,7 +50,7 @@ public class EmbedPermsListener extends ListenerAdapter {
 			Guild guild = event.getGuild();
 
 			// Check if enabled
-			if (enabled.get(guild, true, IGuildPropertyMapping::getAsBoolean)) {
+			if (enabled.get(guild, () -> true, PropertyMapping::getAsBoolean)) {
 				GuildChannel channel = event.getGuildChannel();
 				Message message = event.getMessage();
 
@@ -77,9 +76,9 @@ public class EmbedPermsListener extends ListenerAdapter {
 	 * @return Returns a {@link MessageEmbed} with the guilds specified "No Embed
 	 *         Permissions" image inside an embed
 	 */
-	private static final MessageEmbed noEmbedImage(Guild guild) {
+	private final MessageEmbed noEmbedImage(Guild guild) {
 		return new EmbedBuilder().setColor(guild.getSelfMember().getColor()).setImage(embedURL.get(guild,
-				"https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", IGuildPropertyMapping::getAsString))
+				() -> "https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", PluginPropertyMapping::getAsString))
 				.build();
 	}
 }
