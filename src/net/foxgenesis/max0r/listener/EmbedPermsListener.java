@@ -9,7 +9,6 @@ import net.foxgenesis.property.PropertyMapping;
 import net.foxgenesis.property.PropertyType;
 import net.foxgenesis.watame.plugin.Plugin;
 import net.foxgenesis.watame.property.PluginProperty;
-import net.foxgenesis.watame.property.PluginPropertyMapping;
 import net.foxgenesis.watame.property.PluginPropertyProvider;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -39,7 +38,7 @@ public class EmbedPermsListener extends ListenerAdapter {
 	private final PluginProperty embedURL;
 
 	public EmbedPermsListener(Plugin plugin, PluginPropertyProvider provider) {
-		enabled = provider.upsertProperty(plugin, "embedperms.enabled", true, PropertyType.PLAIN);
+		enabled = provider.upsertProperty(plugin, "embedperms.enabled", true, PropertyType.NUMBER);
 		embedURL = provider.upsertProperty(plugin, "embedperms.url", true, PropertyType.PLAIN);
 	}
 
@@ -78,7 +77,7 @@ public class EmbedPermsListener extends ListenerAdapter {
 	 */
 	private final MessageEmbed noEmbedImage(Guild guild) {
 		return new EmbedBuilder().setColor(guild.getSelfMember().getColor()).setImage(embedURL.get(guild,
-				() -> "https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", PluginPropertyMapping::getAsString))
+				() -> "https://media.tenor.com/FdA_-MF4hIAAAAAC/bobux-roblox.gif", PropertyMapping::getAsString))
 				.build();
 	}
 }

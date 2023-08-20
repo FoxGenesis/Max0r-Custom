@@ -11,7 +11,6 @@ import net.foxgenesis.util.MethodTimer;
 import net.foxgenesis.util.StreamUtils;
 import net.foxgenesis.watame.plugin.Plugin;
 import net.foxgenesis.watame.property.PluginProperty;
-import net.foxgenesis.watame.property.PluginPropertyMapping;
 import net.foxgenesis.watame.property.PluginPropertyProvider;
 
 import org.slf4j.Logger;
@@ -55,7 +54,7 @@ public class NonPingableNameListener extends ListenerAdapter {
 	private final PluginProperty replacement;
 
 	public NonPingableNameListener(Plugin plugin, PluginPropertyProvider provider) {
-		this.enabled = provider.upsertProperty(plugin, "pingable.enabled", true, PropertyType.PLAIN);
+		this.enabled = provider.upsertProperty(plugin, "pingable.enabled", true, PropertyType.NUMBER);
 		this.replacement = provider.upsertProperty(plugin, "pingable.replacement", true, PropertyType.PLAIN);
 	}
 
@@ -164,7 +163,7 @@ public class NonPingableNameListener extends ListenerAdapter {
 	}
 
 	private String getReplacement(Guild guild) {
-		String set = replacement.get(guild, () -> "Pingable name only", PluginPropertyMapping::getAsString);
+		String set = replacement.get(guild, () -> "Pingable name only", PropertyMapping::getAsString);
 		return set.length() < 3 ? "Pingable name only" : set;
 	}
 }
