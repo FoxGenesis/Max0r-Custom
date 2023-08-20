@@ -1,7 +1,5 @@
 package net.foxgenesis.max0r.listener;
 
-import java.util.Optional;
-
 import net.foxgenesis.property.PropertyMapping;
 import net.foxgenesis.property.PropertyType;
 import net.foxgenesis.watame.WatameBot;
@@ -32,25 +30,19 @@ public class VoiceChatListener extends ListenerAdapter {
 	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
 		Guild guild = event.getGuild();
 		if (enabled.get(guild, () -> false, PropertyMapping::getAsBoolean)) {
-			getLogChannel(guild).ifPresent(property -> {
-				AudioChannelUnion channel = event.getChannelJoined();
-				AudioChannelUnion last = event.getChannelLeft();
-				State state = channel == null ? State.DISCONNECTED : last == null ? State.JOINED : State.MOVED;
+			loggingChannel.getOr(guild, WatameBot.INSTANCE.getLoggingChannel())
+					.map(PluginPropertyMapping::getAsMessageChannel).ifPresent(modlog -> {
+						AudioChannelUnion channel = event.getChannelJoined();
+						AudioChannelUnion last = event.getChannelLeft();
+						State state = channel == null ? State.DISCONNECTED : last == null ? State.JOINED : State.MOVED;
 
-				EmbedBuilder builder = new EmbedBuilder();
-				builder.setColor(state.color);
-				builder.setDescription(State.getDisplayString(state, event.getMember(), channel, last));
+						EmbedBuilder builder = new EmbedBuilder();
+						builder.setColor(state.color);
+						builder.setDescription(State.getDisplayString(state, event.getMember(), channel, last));
 
-				property.getAsMessageChannel().sendMessageEmbeds(builder.build()).queue();
-			});
+						modlog.sendMessageEmbeds(builder.build()).queue();
+					});
 		}
-	}
-
-	private Optional<? extends PluginPropertyMapping> getLogChannel(Guild guild) {
-		Optional<? extends PluginPropertyMapping> channel = loggingChannel.get(guild);
-		if (channel.isPresent())
-			return channel;
-		return WatameBot.INSTANCE.getLoggingChannel().get(guild);
 	}
 
 	private static enum State {
