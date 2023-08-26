@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;;
 
@@ -50,17 +51,21 @@ public class EmbedPermsListener extends ListenerAdapter {
 
 			// Check if enabled
 			if (enabled.get(guild, () -> true, PropertyMapping::getAsBoolean)) {
-				GuildChannel channel = event.getGuildChannel();
-				Message message = event.getMessage();
+				GuildMessageChannelUnion channel = event.getGuildChannel();
 
-				// Check if the user has embed permissions and we do
-				if (event.getMember() != null && !hasEmbedPerms.test(event.getMember(), channel)
-						&& hasEmbedPerms.test(guild.getSelfMember(), channel)) {
+				// Check if we can view and send messages
+				if (channel.canTalk()) {
+					Message message = event.getMessage();
 
-					// Check if the message contains a URL not wrapped in <>
-					if (Arrays.stream(message.getContentStripped().split("<.*?>"))
-							.anyMatch(CONTAINS_URL.and(Message.JUMP_URL_PATTERN.asPredicate().negate()))) {
-						message.replyEmbeds(noEmbedImage(guild)).queue();
+					// Check if the user has embed permissions and we do
+					if (event.getMember() != null && !hasEmbedPerms.test(event.getMember(), channel)
+							&& hasEmbedPerms.test(guild.getSelfMember(), channel)) {
+
+						// Check if the message contains a URL not wrapped in <>
+						if (Arrays.stream(message.getContentStripped().split("<.*?>"))
+								.anyMatch(CONTAINS_URL.and(Message.JUMP_URL_PATTERN.asPredicate().negate()))) {
+							message.replyEmbeds(noEmbedImage(guild)).queue();
+						}
 					}
 				}
 			}

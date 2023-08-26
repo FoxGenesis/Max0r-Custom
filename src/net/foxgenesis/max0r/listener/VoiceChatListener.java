@@ -30,7 +30,7 @@ public class VoiceChatListener extends ListenerAdapter {
 	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
 		Guild guild = event.getGuild();
 		if (enabled.get(guild, () -> false, PropertyMapping::getAsBoolean)) {
-			loggingChannel.getOr(guild, WatameBot.INSTANCE.getLoggingChannel())
+			loggingChannel.getOr(guild, WatameBot.getLoggingChannel())
 					.map(PluginPropertyMapping::getAsMessageChannel).ifPresent(modlog -> {
 						AudioChannelUnion channel = event.getChannelJoined();
 						AudioChannelUnion last = event.getChannelLeft();
