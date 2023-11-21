@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import net.foxgenesis.property.PropertyMapping;
 import net.foxgenesis.property.PropertyType;
+import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.Plugin;
 import net.foxgenesis.watame.property.PluginProperty;
 import net.foxgenesis.watame.property.PluginPropertyProvider;
@@ -29,7 +30,9 @@ public class EmbedPermsListener extends ListenerAdapter {
 	private final PluginProperty enabled;
 	private final PluginProperty embedURL;
 
-	public EmbedPermsListener(Plugin plugin, PluginPropertyProvider provider) {
+	public EmbedPermsListener() {
+		Plugin plugin = WatameBot.getSelfPlugin();
+		PluginPropertyProvider provider = WatameBot.getPropertyProvider();
 		enabled = provider.upsertProperty(plugin, "embedperms.enabled", true, PropertyType.NUMBER);
 		embedURL = provider.upsertProperty(plugin, "embedperms.url", true, PropertyType.PLAIN);
 	}

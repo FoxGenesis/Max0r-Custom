@@ -9,6 +9,7 @@ import net.foxgenesis.property.PropertyMapping;
 import net.foxgenesis.property.PropertyType;
 import net.foxgenesis.util.MethodTimer;
 import net.foxgenesis.util.StreamUtils;
+import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.Plugin;
 import net.foxgenesis.watame.property.PluginProperty;
 import net.foxgenesis.watame.property.PluginPropertyProvider;
@@ -53,7 +54,9 @@ public class NonPingableNameListener extends ListenerAdapter {
 	 */
 	private final PluginProperty replacement;
 
-	public NonPingableNameListener(Plugin plugin, PluginPropertyProvider provider) {
+	public NonPingableNameListener() {
+		Plugin plugin = WatameBot.getSelfPlugin();
+		PluginPropertyProvider provider = WatameBot.getPropertyProvider();
 		this.enabled = provider.upsertProperty(plugin, "pingable.enabled", true, PropertyType.NUMBER);
 		this.replacement = provider.upsertProperty(plugin, "pingable.replacement", true, PropertyType.PLAIN);
 	}

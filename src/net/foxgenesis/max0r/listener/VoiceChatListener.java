@@ -21,7 +21,9 @@ public class VoiceChatListener extends ListenerAdapter {
 	private final PluginProperty enabled;
 	private final PluginProperty loggingChannel;
 
-	public VoiceChatListener(Plugin plugin, PluginPropertyProvider provider) {
+	public VoiceChatListener() {
+		Plugin plugin = WatameBot.getSelfPlugin();
+		PluginPropertyProvider provider = WatameBot.getPropertyProvider();
 		enabled = provider.upsertProperty(plugin, "voicelog.enabled", true, PropertyType.NUMBER);
 		loggingChannel = provider.upsertProperty(plugin, "voicelog.channel", true, PropertyType.NUMBER);
 	}
@@ -33,7 +35,7 @@ public class VoiceChatListener extends ListenerAdapter {
 			loggingChannel.getOr(guild, WatameBot.getLoggingChannel()).map(PluginPropertyMapping::getAsMessageChannel)
 					.ifPresent(modlog -> {
 						State state = State.getStateForEvent(event);
-						
+
 						EmbedBuilder builder = new EmbedBuilder();
 						builder.setColor(state.color);
 						builder.setDescription(state.getDisplayString(event.getMember(), event.getChannelJoined(),

@@ -15,7 +15,6 @@ import net.foxgenesis.watame.plugin.Plugin;
 import net.foxgenesis.watame.plugin.SeverePluginException;
 import net.foxgenesis.watame.plugin.require.CommandProvider;
 import net.foxgenesis.watame.plugin.require.RequiresIntents;
-import net.foxgenesis.watame.property.PluginPropertyProvider;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -31,13 +30,11 @@ public class Max0rCustomPlugin extends Plugin implements RequiresIntents, Comman
 
 	@Override
 	protected void init(IEventStore builder) throws SeverePluginException {
-		PluginPropertyProvider provider = getPropertyProvider();
-
 		logger.info("Adding listeners");
-		pingable = new NonPingableNameListener(this, provider);
+		pingable = new NonPingableNameListener();
 
-		builder.registerListeners(this, new EmbedPermsListener(this, provider), new DadListener(this, provider),
-				pingable, new VoiceChatListener(this, provider), new InsultCommand());
+		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(), pingable, new VoiceChatListener(),
+				new InsultCommand());
 
 	}
 
