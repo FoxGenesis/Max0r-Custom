@@ -1,11 +1,11 @@
 package net.foxgenesis.max0r.listener;
 
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.foxgenesis.property.PropertyMapping;
 import net.foxgenesis.property.PropertyType;
+import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.Plugin;
 import net.foxgenesis.watame.property.PluginProperty;
 import net.foxgenesis.watame.property.PluginPropertyProvider;
@@ -26,12 +26,10 @@ public class DadListener extends ListenerAdapter {
 
 	private final PluginProperty enabled;
 
-	public DadListener(PluginProperty enabled) {
-		this.enabled = Objects.requireNonNull(enabled);
-	}
-	
-	public DadListener(Plugin plugin, PluginPropertyProvider provider) {
-		this.enabled = provider.upsertProperty(plugin, "dad.enabled", true, PropertyType.PLAIN);
+	public DadListener() {
+		Plugin plugin = WatameBot.getSelfPlugin();
+		PluginPropertyProvider provider = WatameBot.getPropertyProvider();
+		this.enabled = provider.upsertProperty(plugin, "dad.enabled", true, PropertyType.NUMBER);
 	}
 
 	@Override

@@ -1,8 +1,6 @@
 package net.foxgenesis.max0r.listener;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -15,12 +13,14 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.foxgenesis.property.IProperty;
-import net.foxgenesis.property.IPropertyProvider;
+import net.foxgenesis.watame.plugin.Plugin;
+import net.foxgenesis.watame.property.PluginProperty;
+import net.foxgenesis.watame.property.PluginPropertyProvider;
+import net.foxgenesis.property.PropertyMapping;
+import net.foxgenesis.property.PropertyType;
 import net.foxgenesis.util.MethodTimer;
 import net.foxgenesis.util.StreamUtils;
 import net.foxgenesis.watame.WatameBot;
-import net.foxgenesis.watame.property.IGuildPropertyMapping;
 
 /**
  * Listener class that ensures all members nicknames don't start with '!'.
@@ -38,26 +38,28 @@ public class ExclamationNameListener extends ListenerAdapter {
 	/**
 	 * If enabled property
 	 */
-	private static final IProperty<String, Guild, IGuildPropertyMapping> enabled;
+	private final PluginProperty enabled;
 
 	/**
 	 * Name replacement property
 	 */
-	private static final IProperty<String, Guild, IGuildPropertyMapping> replacement;
+	private final PluginProperty replacement;
 
 	/**
 	 * Name replacement property
 	 */
-	private static final IProperty<String, Guild, IGuildPropertyMapping> roles;
+	private final PluginProperty roles;
 	///TODO: add roles
 	
-	static {
-		IPropertyProvider<String, Guild, IGuildPropertyMapping> provider = WatameBot.INSTANCE
-				.getPropertyProvider();
+	
+	public ExclamationNameListener() {
 
-		enabled = provider.getProperty("max0r_exclamation_enabled");
-		replacement = provider.getProperty("max0r_exclamation_replacement");
-		roles = provider.getProperty("max0r_exclamation_roles");
+		Plugin plugin = WatameBot.getSelfPlugin();
+		PluginPropertyProvider provider = WatameBot.getPropertyProvider();
+		this.replacement = provider.upsertProperty(plugin, "exclamation.replacement", true, PropertyType.PLAIN);
+		this.enabled = provider.upsertProperty(plugin, "exclamation.enabled", true, PropertyType.NUMBER);
+		this.roles =  provider.upsertProperty(plugin, "exclamation.roles", true, PropertyType.NUMBER);
+
 	}
 
 	@Override
@@ -75,20 +77,23 @@ public class ExclamationNameListener extends ListenerAdapter {
 	 * 
 	 * @param member - member to check
 	 */
-	private static void checkName(Member member) {
-		Guild guild = member.getGuild();
-		Member self = guild.getSelfMember();
-
-		// Check if enabled, should change nickname and can interact with member
-		if (isEnabled(guild) && member.getEffectiveName().charAt(0) == '!' && self.canInteract(member)) {
-
-			// Check if bot has permissions to change nicknames
-			if (self.hasPermission(Permission.NICKNAME_MANAGE)) {
-				member.modifyNickname(getReplacement(guild, member.getEffectiveName()))
-						.reason("Name starts with '!'").queue();
-			} else
-				logger.warn("Unable to change nicknames in [{}]! Missing permissions!", guild.getName());
+	private void checkName(Member member) {
+		
+		if (enabled.get(member.getGuild(), () -> false, PropertyMapping::getAsBoolean)) {
+			Guild guild = member.getGuild();
+			Member self = guild.getSelfMember();
+			
+			if(member.getEffectiveName().charAt(0) == '!' && self.canInteract(member)) {
+				// Check if bot has permissions to change nicknames
+				if (self.hasPermission(Permission.NICKNAME_MANAGE)) {
+					member.modifyNickname(getReplacement(guild, member.getEffectiveName()))
+							.reason("Name starts with '!'").queue();
+				} else
+					logger.warn("Unable to change nicknames in [{}]! Missing permissions!", guild.getName());
+			}
+			
 		}
+		
 	}
 
 	/**
@@ -96,10 +101,9 @@ public class ExclamationNameListener extends ListenerAdapter {
 	 * 
 	 * @param guilds - stream of guilds to test
 	 */
-	public static void scanGuilds(Stream<Guild> guilds) {
+	public void scanGuilds(Stream<Guild> guilds) {
 		logger.info("Scanning all guilds...");
-		CompletableFuture.allOf(guilds.filter(ExclamationNameListener::isEnabled)
-				.map(ExclamationNameListener::scanGuild).toArray(CompletableFuture[]::new))
+		CompletableFuture.allOf(guilds.filter(this::isEnabled).map(this::scanGuild).toArray(CompletableFuture[]::new))
 				.whenComplete((v, err) -> logger.info("Scan completed!"));
 	}
 
@@ -110,7 +114,7 @@ public class ExclamationNameListener extends ListenerAdapter {
 	 * @return Returns a {@link CompletableFuture} that completes normally when all
 	 *         names have been changed
 	 */
-	public static CompletableFuture<Void> scanGuild(Guild guild) {
+	public CompletableFuture<Void> scanGuild(Guild guild) {
 		CompletableFuture<Void> cf = new CompletableFuture<>();
 
 		// Check if members are loaded
@@ -161,14 +165,13 @@ public class ExclamationNameListener extends ListenerAdapter {
 		});
 	}
 
-	private static boolean isEnabled(Guild guild) {
-		return enabled.get(guild, false, IGuildPropertyMapping::getAsBoolean);
+	private boolean isEnabled(Guild guild) {
+		return enabled.get(guild, () -> false, PropertyMapping::getAsBoolean);
 	}
 	
-	private static String getReplacement(Guild guild, String originalName) {
+	private String getReplacement(Guild guild, String originalName) {
 		String replaced = originalName.replaceFirst("^(!+)", "z");
-		String set = ExclamationNameListener.replacement.get(guild, replaced, 
-				IGuildPropertyMapping::getAsString);
+		String set = replacement.get(guild, () -> replaced, PropertyMapping::getAsString);
 		return set.length() < 3 || set.length() > 32 ? replaced : set;
 	}
 }
