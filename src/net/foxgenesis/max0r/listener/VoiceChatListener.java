@@ -21,7 +21,9 @@ public class VoiceChatListener extends ListenerAdapter {
 	private final PluginProperty enabled;
 	private final PluginProperty loggingChannel;
 
-	public VoiceChatListener(Plugin plugin, PluginPropertyProvider provider) {
+	public VoiceChatListener() {
+		Plugin plugin = WatameBot.getSelfPlugin();
+		PluginPropertyProvider provider = WatameBot.getPropertyProvider();
 		enabled = provider.upsertProperty(plugin, "voicelog.enabled", true, PropertyType.NUMBER);
 		loggingChannel = provider.upsertProperty(plugin, "voicelog.channel", true, PropertyType.NUMBER);
 	}
@@ -30,15 +32,14 @@ public class VoiceChatListener extends ListenerAdapter {
 	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
 		Guild guild = event.getGuild();
 		if (enabled.get(guild, () -> false, PropertyMapping::getAsBoolean)) {
-			loggingChannel.getOr(guild, WatameBot.INSTANCE.getLoggingChannel())
-					.map(PluginPropertyMapping::getAsMessageChannel).ifPresent(modlog -> {
-						AudioChannelUnion channel = event.getChannelJoined();
-						AudioChannelUnion last = event.getChannelLeft();
-						State state = channel == null ? State.DISCONNECTED : last == null ? State.JOINED : State.MOVED;
+			loggingChannel.getOr(guild, WatameBot.getLoggingChannel()).map(PluginPropertyMapping::getAsMessageChannel)
+					.ifPresent(modlog -> {
+						State state = State.getStateForEvent(event);
 
 						EmbedBuilder builder = new EmbedBuilder();
 						builder.setColor(state.color);
-						builder.setDescription(State.getDisplayString(state, event.getMember(), channel, last));
+						builder.setDescription(state.getDisplayString(event.getMember(), event.getChannelJoined(),
+								event.getChannelLeft()));
 
 						modlog.sendMessageEmbeds(builder.build()).queue();
 					});
@@ -57,15 +58,18 @@ public class VoiceChatListener extends ListenerAdapter {
 			this.format = format;
 		}
 
-		public static String getDisplayString(State state, Member member, AudioChannelUnion current,
-				AudioChannelUnion last) {
-			return switch (state) {
-				case JOINED -> state.format.formatted(member.getAsMention(), current.getAsMention());
-				case DISCONNECTED -> state.format.formatted(member.getAsMention(), last.getAsMention());
-				case MOVED ->
-					state.format.formatted(member.getAsMention(), last.getAsMention(), current.getAsMention());
-				default -> throw new IllegalArgumentException("Unexpected value: " + state);
+		public String getDisplayString(Member member, AudioChannelUnion current, AudioChannelUnion last) {
+			return switch (this) {
+				case JOINED -> format.formatted(member.getAsMention(), current.getAsMention());
+				case DISCONNECTED -> format.formatted(member.getAsMention(), last.getAsMention());
+				case MOVED -> format.formatted(member.getAsMention(), last.getAsMention(), current.getAsMention());
+				default -> throw new IllegalArgumentException("Unexpected value: " + this);
 			};
+		}
+
+		public static State getStateForEvent(GuildVoiceUpdateEvent event) {
+			return event.getChannelJoined() == null ? State.DISCONNECTED
+					: event.getChannelLeft() == null ? State.JOINED : State.MOVED;
 		}
 	}
 }
