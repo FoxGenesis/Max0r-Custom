@@ -8,6 +8,7 @@ import net.foxgenesis.max0r.listener.DadListener;
 import net.foxgenesis.max0r.listener.EmbedPermsListener;
 import net.foxgenesis.max0r.listener.InsultCommand;
 import net.foxgenesis.max0r.listener.NonPingableNameListener;
+import net.foxgenesis.max0r.listener.ExclamationNameListener;
 import net.foxgenesis.max0r.listener.VoiceChatListener;
 import net.foxgenesis.watame.WatameBot;
 import net.foxgenesis.watame.plugin.IEventStore;
@@ -34,7 +35,8 @@ public class Max0rCustomPlugin extends Plugin implements RequiresIntents, Comman
 		pingable = new NonPingableNameListener();
 
 		builder.registerListeners(this, new EmbedPermsListener(), new DadListener(), pingable, new VoiceChatListener(),
-				new InsultCommand());
+				new InsultCommand(), new ExclamationNameListener());
+
 
 	}
 
